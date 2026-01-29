@@ -1,17 +1,23 @@
 import { ReactNode } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { QUESTION_BANK_VERSION } from "@/lib/questionBank";
+import { Settings } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface AppShellProps {
   children: ReactNode;
 }
 
 export function AppShell({ children }: AppShellProps) {
+  const location = useLocation();
+  const isIntegrations = location.pathname === "/integrations";
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
       <header className="border-b border-border bg-card">
         <div className="container max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <div className="w-10 h-10 rounded-lg hero-gradient flex items-center justify-center">
               <span className="text-primary-foreground font-display font-bold text-lg">
                 CRP
@@ -25,7 +31,17 @@ export function AppShell({ children }: AppShellProps) {
                 Coeficiente de Risco Percebido
               </p>
             </div>
-          </div>
+          </Link>
+          <Link
+            to="/integrations"
+            className={cn(
+              "p-2 rounded-lg transition-colors",
+              isIntegrations ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted"
+            )}
+            title="Integrações"
+          >
+            <Settings className="w-5 h-5" />
+          </Link>
         </div>
       </header>
 
