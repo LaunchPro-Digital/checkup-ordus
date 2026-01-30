@@ -68,10 +68,35 @@ export default function Resultados() {
 
       if (response.ok) {
         const data = await response.json();
-        // Check if n8n returned AI-generated content
-        if (data && (data.aiContent || data.content || data.message || data.text)) {
-          const content = data.aiContent || data.content || data.message || data.text;
+        console.log("Webhook response:", JSON.stringify(data, null, 2));
+        
+        // Parse n8n response - handles array format with devolutiva.text
+        let content: string | null = null;
+        
+        // Check if response is an array (n8n format)
+        if (Array.isArray(data) && data.length > 0) {
+          const firstItem = data[0];
+          // n8n returns { devolutiva: { text: "..." } }
+          if (firstItem?.devolutiva?.text) {
+            content = firstItem.devolutiva.text;
+          } else if (firstItem?.aiContent || firstItem?.content || firstItem?.message || firstItem?.text) {
+            content = firstItem.aiContent || firstItem.content || firstItem.message || firstItem.text;
+          }
+        } 
+        // Check if response is a direct object
+        else if (data && typeof data === "object") {
+          if (data.devolutiva?.text) {
+            content = data.devolutiva.text;
+          } else if (data.aiContent || data.content || data.message || data.text) {
+            content = data.aiContent || data.content || data.message || data.text;
+          }
+        }
+        
+        if (content) {
+          console.log("AI content found:", content.substring(0, 100) + "...");
           setAiContent(content);
+        } else {
+          console.warn("No AI content found in webhook response");
         }
       } else {
         console.error("Webhook failed:", response.status, response.statusText);
