@@ -48,38 +48,86 @@ const RISK_COLORS: Record<RiskBand, { bg: string; text: string; border: string }
 
 // Pre-process AI content to convert section titles to proper Markdown headers
 function formatAIContent(content: string): string {
-  // List of known section titles that should become h2 headers
+  // List of known section titles that should become h2 headers (case insensitive)
   const sectionTitles = [
-    "Resumo Executivo",
-    "Leitura por Pilar",
-    "Top Gaps com Direção de Correção",
-    "Top Gaps",
-    "Plano de Ação",
-    "Plano Mínimo",
-    "CTA Final",
-    "Como está o seu CORE hoje?",
-    "Análise por Pilar",
-    "Recomendações",
-    "Próximos Passos",
+    "resumo executivo",
+    "leitura por pilar",
+    "top gaps com direção de correção",
+    "top gaps",
+    "plano de ação",
+    "plano de ação (14 dias)",
+    "plano mínimo",
+    "cta final",
+    "como está o seu core hoje",
+    "como está seu core hoje",
+    "análise por pilar",
+    "recomendações",
+    "próximos passos",
   ];
   
-  let formatted = content;
+  // Split content into lines for processing
+  const lines = content.split('\n');
+  const formattedLines: string[] = [];
   
-  // Convert known section titles to h2 headers
-  sectionTitles.forEach(title => {
-    // Match title at start of line (with or without existing markdown)
-    const regex = new RegExp(`^(#{0,3}\\s*)?${title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`, 'gim');
-    formatted = formatted.replace(regex, `\n## ${title}\n`);
-  });
-  
-  // Add spacing after bullet points that have bold titles (like "- **Clareza**:")
-  formatted = formatted.replace(/^(- \*\*[^*]+\*\*:)/gm, '\n$1');
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i].trim();
+    
+    if (!line) {
+      formattedLines.push('');
+      continue;
+    }
+    
+    // Check if this line is a section title
+    const lowerLine = line.toLowerCase().replace(/[?:]/g, '').trim();
+    const isTitle = sectionTitles.some(title => 
+      lowerLine === title || lowerLine.startsWith(title)
+    );
+    
+    if (isTitle) {
+      // Add extra line break before title for spacing
+      if (formattedLines.length > 0) {
+        formattedLines.push('');
+      }
+      // Format as h2 with the original text (preserving case)
+      formattedLines.push(`## **${line.replace(/^#+\s*/, '')}**`);
+      formattedLines.push('');
+      continue;
+    }
+    
+    // Check if line starts with a pillar name (Clareza:, Organização:, etc.)
+    const pillarMatch = line.match(/^(Clareza|Organização|Reputação|Expansão|Organização):\s*(.+)/i);
+    if (pillarMatch) {
+      // Add spacing before pillar items
+      formattedLines.push('');
+      formattedLines.push(`**${pillarMatch[1]}:** ${pillarMatch[2]}`);
+      continue;
+    }
+    
+    // Check if line is an action item (starts with verb or numbered)
+    const actionMatch = line.match(/^(\d+\.\s*)?([A-Z][^:]+):\s*(.+)/);
+    if (actionMatch && !pillarMatch) {
+      formattedLines.push('');
+      if (actionMatch[1]) {
+        // Numbered item
+        formattedLines.push(`${actionMatch[1]}**${actionMatch[2]}:** ${actionMatch[3]}`);
+      } else {
+        formattedLines.push(`• **${actionMatch[2]}:** ${actionMatch[3]}`);
+      }
+      continue;
+    }
+    
+    // Regular paragraph - add spacing
+    if (formattedLines.length > 0 && formattedLines[formattedLines.length - 1] !== '') {
+      formattedLines.push('');
+    }
+    formattedLines.push(line);
+  }
   
   // Clean up multiple consecutive newlines (max 2)
-  formatted = formatted.replace(/\n{3,}/g, '\n\n');
+  let result = formattedLines.join('\n');
+  result = result.replace(/\n{3,}/g, '\n\n');
   
-  // Trim leading/trailing whitespace
-  return formatted.trim();
+  return result.trim();
 }
 
 export function ResultView({
@@ -268,15 +316,16 @@ export function ResultView({
           </CardHeader>
           <CardContent>
             <div className="prose prose-sm md:prose-base max-w-none 
-                          prose-headings:font-display prose-headings:text-foreground prose-headings:font-semibold
-                          prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4 prose-h2:pb-2 prose-h2:border-b prose-h2:border-accent/20
-                          prose-h3:text-lg prose-h3:mt-6 prose-h3:mb-3
-                          prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:mb-4
+                          prose-headings:font-display prose-headings:text-foreground
+                          prose-h2:text-xl prose-h2:font-bold prose-h2:mt-8 prose-h2:mb-4 prose-h2:pt-4 prose-h2:border-t prose-h2:border-accent/20 first:prose-h2:border-t-0 first:prose-h2:pt-0 first:prose-h2:mt-0
+                          prose-h3:text-lg prose-h3:font-semibold prose-h3:mt-6 prose-h3:mb-3
+                          prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:mb-5
                           prose-strong:text-foreground prose-strong:font-semibold
-                          prose-ul:my-4 prose-ul:space-y-3 prose-ul:list-none prose-ul:pl-0
-                          prose-li:text-muted-foreground prose-li:leading-relaxed prose-li:pl-4 prose-li:border-l-2 prose-li:border-accent/30 prose-li:mb-4
+                          prose-ul:my-5 prose-ul:space-y-4 prose-ul:list-none prose-ul:pl-0
+                          prose-li:text-muted-foreground prose-li:leading-relaxed prose-li:mb-3
                           prose-a:text-accent prose-a:no-underline hover:prose-a:underline
-                          [&>*:first-child]:mt-0">
+                          [&>*:first-child]:mt-0
+                          [&>h2:first-child]:border-t-0 [&>h2:first-child]:pt-0">
               <ReactMarkdown>{formatAIContent(aiContent)}</ReactMarkdown>
             </div>
           </CardContent>
