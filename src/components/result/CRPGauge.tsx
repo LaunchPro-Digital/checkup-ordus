@@ -1,22 +1,63 @@
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import type { RiskBand } from "@/lib/questionBank";
 
 interface CRPGaugeProps {
   score: number;
   band: RiskBand;
+  animate?: boolean;
   className?: string;
 }
 
-export function CRPGauge({ score, band, className }: CRPGaugeProps) {
-  // Calculate needle rotation: 0 = -90deg (left), 10 = 90deg (right)
-  // Score 0-10 maps to rotation -90 to 90 degrees
-  const rotation = (score / 10) * 180 - 90;
+export function CRPGauge({ score, band, animate = false, className }: CRPGaugeProps) {
+  const [displayScore, setDisplayScore] = useState(animate ? 0 : score);
+  const [rotation, setRotation] = useState(animate ? -90 : (score / 10) * 180 - 90);
+
+  useEffect(() => {
+    if (!animate) {
+      setDisplayScore(score);
+      setRotation((score / 10) * 180 - 90);
+      return;
+    }
+
+    // Animate from 0 to score
+    const targetRotation = (score / 10) * 180 - 90;
+    const duration = 1500; // 1.5 seconds
+    const startTime = Date.now();
+    const startRotation = -90;
+    const startScore = 0;
+
+    const animateGauge = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      
+      // Ease out cubic for smooth deceleration
+      const eased = 1 - Math.pow(1 - progress, 3);
+      
+      const currentRotation = startRotation + (targetRotation - startRotation) * eased;
+      const currentScore = startScore + (score - startScore) * eased;
+      
+      setRotation(currentRotation);
+      setDisplayScore(currentScore);
+
+      if (progress < 1) {
+        requestAnimationFrame(animateGauge);
+      }
+    };
+
+    // Start animation after a brief delay
+    const timeout = setTimeout(() => {
+      requestAnimationFrame(animateGauge);
+    }, 300);
+
+    return () => clearTimeout(timeout);
+  }, [score, animate]);
   
-  // Colors for each section of the gauge
+  // Colors for each section of the gauge - Petrol Blue to Red gradient
   const sections = [
-    { color: "hsl(152, 69%, 31%)", label: "0" }, // Green - Low risk
-    { color: "hsl(152, 69%, 35%)", label: "1" },
-    { color: "hsl(152, 60%, 40%)", label: "2" },
+    { color: "hsl(200, 80%, 28%)", label: "0" }, // Petrol Blue - Low risk
+    { color: "hsl(195, 75%, 32%)", label: "1" },
+    { color: "hsl(190, 70%, 38%)", label: "2" },
     { color: "hsl(48, 90%, 50%)", label: "3" },  // Yellow - Medium risk
     { color: "hsl(42, 90%, 50%)", label: "4" },
     { color: "hsl(36, 90%, 50%)", label: "5" },
@@ -115,7 +156,10 @@ export function CRPGauge({ score, band, className }: CRPGaugeProps) {
           </text>
           
           {/* Needle */}
-          <g transform={`rotate(${rotation}, 100, 100)`}>
+          <g 
+            transform={`rotate(${rotation}, 100, 100)`}
+            style={{ transition: animate ? "none" : "transform 0.3s ease-out" }}
+          >
             {/* Needle body */}
             <polygon
               points="100,30 96,100 104,100"
@@ -142,7 +186,7 @@ export function CRPGauge({ score, band, className }: CRPGaugeProps) {
       <div className="text-center space-y-2">
         <div className="flex items-baseline justify-center gap-2">
           <span className="font-display text-6xl md:text-7xl font-bold text-foreground">
-            {score.toFixed(1)}
+            {displayScore.toFixed(1)}
           </span>
           <span className="text-xl text-muted-foreground">/10</span>
         </div>

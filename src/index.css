@@ -37,8 +37,8 @@
     --accent: 200 80% 28%;
     --accent-foreground: 0 0% 100%;
 
-    /* Risk level colors - Clear visual distinction */
-    --risk-low: 152 69% 31%;
+    /* Risk level colors - Petrol Blue for low risk */
+    --risk-low: 200 80% 28%;
     --risk-medium: 38 92% 50%;
     --risk-high: 0 72% 51%;
 

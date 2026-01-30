@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, Shield, Target, Zap, TrendingDown, CheckCircle2 } from "lucide-react";
@@ -12,7 +12,6 @@ const PILLAR_ICONS: Record<Pillar, React.ElementType> = {
 };
 
 const Index = () => {
-  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-background">
@@ -40,12 +39,14 @@ const Index = () => {
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
               <Button
+                asChild
                 size="lg"
                 className="text-base px-8 h-12 shadow-elevated"
-                onClick={() => navigate("/checkup")}
               >
-                Iniciar Checkup de Credibilidade
-                <ArrowRight className="w-5 h-5 ml-2" />
+                <Link to="/checkup">
+                  Iniciar Checkup de Credibilidade
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Link>
               </Button>
             </div>
 
@@ -191,12 +192,14 @@ const Index = () => {
             20 perguntas objetivas. Resultado imediato com os principais gargalos e plano de ação.
           </p>
           <Button
+            asChild
             size="lg"
             className="text-base px-8 h-12 shadow-elevated"
-            onClick={() => navigate("/checkup")}
           >
-            Iniciar Checkup
-            <ArrowRight className="w-5 h-5 ml-2" />
+            <Link to="/checkup">
+              Iniciar Checkup
+              <ArrowRight className="w-5 h-5 ml-2" />
+            </Link>
           </Button>
         </div>
       </section>

@@ -26,6 +26,7 @@ import { CRPGauge } from "./CRPGauge";
 
 interface ResultViewProps {
   submission: Submission;
+  aiContent?: string | null;
   onSchedule?: () => void;
   onDownloadPDF?: () => void;
   onDownloadMarkdown?: () => void;
@@ -46,6 +47,7 @@ const RISK_COLORS: Record<RiskBand, { bg: string; text: string; border: string }
 
 export function ResultView({
   submission,
+  aiContent,
   onSchedule,
   onDownloadPDF,
   onDownloadMarkdown,
@@ -93,7 +95,14 @@ export function ResultView({
       {/* Main CRP Gauge */}
       <Card className="border-2 border-foreground/10">
         <CardContent className="p-8 md:p-12">
-          <CRPGauge score={crp.score} band={crp.band} />
+          <CRPGauge score={crp.score} band={crp.band} animate />
+          <div className="text-center mt-6 pt-6 border-t border-border">
+            <p className="text-lg text-muted-foreground">
+              O Coeficiente de Risco Percebido da{" "}
+              <span className="font-semibold text-foreground">{identity.companyName}</span>{" "}
+              é de: <span className="font-display text-2xl font-bold text-foreground">{crp.score.toFixed(1)}</span>
+            </p>
+          </div>
         </CardContent>
       </Card>
 
@@ -202,63 +211,91 @@ export function ResultView({
         </CardContent>
       </Card>
 
-      {/* Emergency Actions - Detailed */}
-      <Card className="card-elevated border-accent/30 bg-accent/5">
-        <CardHeader>
-          <CardTitle className="font-display text-2xl flex items-center gap-2">
-            <Lightbulb className="w-6 h-6 text-accent" />
-            Ações Emergenciais Para Elevar o CRP
-          </CardTitle>
-          <CardDescription className="text-base">
-            Baseado nas suas respostas, estas são as 3 ações com maior impacto potencial
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-8">
-          {detailedResult.actions.map((action, index) => {
-            const Icon = PILLAR_ICONS[action.pillar];
-            return (
-              <div key={index} className="space-y-4">
-                <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center">
-                    <span className="font-display text-xl font-bold text-accent">
-                      {index + 1}
-                    </span>
-                  </div>
-                  <div className="flex-1 space-y-3">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Badge className="bg-foreground text-background">
-                        <Icon className="w-3 h-3 mr-1" />
-                        {action.pillarName}
-                      </Badge>
+      {/* AI-Generated Content (from n8n webhook) */}
+      {aiContent && (
+        <Card className="card-elevated border-accent/30 bg-accent/5">
+          <CardHeader>
+            <CardTitle className="font-display text-2xl flex items-center gap-2">
+              <Lightbulb className="w-6 h-6 text-accent" />
+              Análise Personalizada para {identity.companyName}
+            </CardTitle>
+            <CardDescription className="text-base">
+              Diagnóstico gerado com base nas suas respostas específicas
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="prose prose-sm max-w-none text-muted-foreground leading-relaxed">
+              {aiContent.split('\n').map((paragraph, index) => (
+                paragraph.trim() && (
+                  <p key={index} className="mb-4 last:mb-0">
+                    {paragraph}
+                  </p>
+                )
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Emergency Actions - Detailed (shown when no AI content) */}
+      {!aiContent && (
+        <Card className="card-elevated border-accent/30 bg-accent/5">
+          <CardHeader>
+            <CardTitle className="font-display text-2xl flex items-center gap-2">
+              <Lightbulb className="w-6 h-6 text-accent" />
+              Ações Emergenciais Para Elevar o CRP
+            </CardTitle>
+            <CardDescription className="text-base">
+              Baseado nas suas respostas, estas são as 3 ações com maior impacto potencial
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-8">
+            {detailedResult.actions.map((action, index) => {
+              const Icon = PILLAR_ICONS[action.pillar];
+              return (
+                <div key={index} className="space-y-4">
+                  <div className="flex items-start gap-4">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center">
+                      <span className="font-display text-xl font-bold text-accent">
+                        {index + 1}
+                      </span>
                     </div>
-                    <h3 className="font-display font-semibold text-lg text-foreground">
-                      {action.action}
-                    </h3>
-                    
-                    <div className="space-y-3 pl-0 md:pl-4 border-l-0 md:border-l-2 border-accent/20">
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium text-foreground">Por que isso é essencial?</p>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                          {action.why}
-                        </p>
+                    <div className="flex-1 space-y-3">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge className="bg-foreground text-background">
+                          <Icon className="w-3 h-3 mr-1" />
+                          {action.pillarName}
+                        </Badge>
                       </div>
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium text-foreground">Impacto esperado:</p>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                          {action.impact}
-                        </p>
+                      <h3 className="font-display font-semibold text-lg text-foreground">
+                        {action.action}
+                      </h3>
+                      
+                      <div className="space-y-3 pl-0 md:pl-4 border-l-0 md:border-l-2 border-accent/20">
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium text-foreground">Por que isso é essencial?</p>
+                          <p className="text-sm text-muted-foreground leading-relaxed">
+                            {action.why}
+                          </p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium text-foreground">Impacto esperado:</p>
+                          <p className="text-sm text-muted-foreground leading-relaxed">
+                            {action.impact}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
+                  {index < detailedResult.actions.length - 1 && (
+                    <Separator className="my-6" />
+                  )}
                 </div>
-                {index < detailedResult.actions.length - 1 && (
-                  <Separator className="my-6" />
-                )}
-              </div>
-            );
-          })}
-        </CardContent>
-      </Card>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
 
       {/* CTA for Credibility Machine */}
       <Card className="card-elevated border-foreground/20 bg-foreground/[0.02]">
