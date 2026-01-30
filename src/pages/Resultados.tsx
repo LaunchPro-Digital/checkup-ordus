@@ -70,23 +70,29 @@ export default function Resultados() {
         const data = await response.json();
         console.log("Webhook response:", JSON.stringify(data, null, 2));
         
-        // Parse n8n response - handles array format with devolutiva.text
+        // Parse n8n response - prefer markdown format for best formatting
         let content: string | null = null;
+        
+        // Helper to extract content from devolutiva object - prefer markdown format
+        const extractContent = (devolutiva: { markdown?: string; text?: string; html?: string }) => {
+          // Prefer markdown format for best formatting with proper line breaks
+          return devolutiva?.markdown || devolutiva?.text || null;
+        };
         
         // Check if response is an array (n8n format)
         if (Array.isArray(data) && data.length > 0) {
           const firstItem = data[0];
-          // n8n returns { devolutiva: { text: "..." } }
-          if (firstItem?.devolutiva?.text) {
-            content = firstItem.devolutiva.text;
+          // n8n returns { devolutiva: { markdown: "...", text: "...", html: "..." } }
+          if (firstItem?.devolutiva) {
+            content = extractContent(firstItem.devolutiva);
           } else if (firstItem?.aiContent || firstItem?.content || firstItem?.message || firstItem?.text) {
             content = firstItem.aiContent || firstItem.content || firstItem.message || firstItem.text;
           }
         } 
         // Check if response is a direct object
         else if (data && typeof data === "object") {
-          if (data.devolutiva?.text) {
-            content = data.devolutiva.text;
+          if (data.devolutiva) {
+            content = extractContent(data.devolutiva);
           } else if (data.aiContent || data.content || data.message || data.text) {
             content = data.aiContent || data.content || data.message || data.text;
           }

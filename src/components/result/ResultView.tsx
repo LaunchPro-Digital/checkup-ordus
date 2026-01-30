@@ -46,9 +46,9 @@ const RISK_COLORS: Record<RiskBand, { bg: string; text: string; border: string }
   high: { bg: "bg-risk-high/10", text: "text-risk-high", border: "border-risk-high" },
 };
 
-// Pre-process AI content to convert section titles to proper Markdown headers
+// Pre-process AI content for optimal display with proper spacing and bold titles
 function formatAIContent(content: string): string {
-  // List of known section titles that should become h2 headers (case insensitive)
+  // Section titles that should become h2 headers with bold (case insensitive)
   const sectionTitles = [
     "resumo executivo",
     "leitura por pilar",
@@ -65,67 +65,77 @@ function formatAIContent(content: string): string {
     "próximos passos",
   ];
   
-  // Split content into lines for processing
-  const lines = content.split('\n');
-  const formattedLines: string[] = [];
+  // Pillar names for highlighting
+  const pillarNames = ["clareza", "organização", "reputação", "expansão"];
   
-  for (let i = 0; i < lines.length; i++) {
-    let line = lines[i].trim();
+  // Split content respecting original line breaks
+  const paragraphs = content.split(/\n\n+/);
+  const formattedParagraphs: string[] = [];
+  
+  for (const paragraph of paragraphs) {
+    let text = paragraph.trim();
+    if (!text) continue;
     
-    if (!line) {
-      formattedLines.push('');
-      continue;
-    }
+    // Remove existing markdown bold markers temporarily for analysis
+    const plainText = text.replace(/\*\*/g, '');
+    const lowerPlain = plainText.toLowerCase().replace(/[?:]/g, '').trim();
     
-    // Check if this line is a section title
-    const lowerLine = line.toLowerCase().replace(/[?:]/g, '').trim();
+    // Check if this is a section title (standalone or with **)
     const isTitle = sectionTitles.some(title => 
-      lowerLine === title || lowerLine.startsWith(title)
+      lowerPlain === title || lowerPlain.startsWith(title)
     );
     
     if (isTitle) {
-      // Add extra line break before title for spacing
-      if (formattedLines.length > 0) {
-        formattedLines.push('');
+      // Format as h2 with bold - remove any existing formatting first
+      const cleanTitle = plainText.replace(/^#+\s*/, '').trim();
+      formattedParagraphs.push(`## **${cleanTitle}**`);
+      continue;
+    }
+    
+    // Process multi-line content (like bullet lists)
+    const lines = text.split('\n');
+    const processedLines: string[] = [];
+    
+    for (let line of lines) {
+      line = line.trim();
+      if (!line) continue;
+      
+      // Check if line starts with "- " (bullet point with pillar)
+      const bulletPillarMatch = line.match(/^-\s*(Clareza|Organização|Reputação|Expansão):\s*(.+)/i);
+      if (bulletPillarMatch) {
+        processedLines.push(`\n**${bulletPillarMatch[1]}:** ${bulletPillarMatch[2]}\n`);
+        continue;
       }
-      // Format as h2 with the original text (preserving case)
-      formattedLines.push(`## **${line.replace(/^#+\s*/, '')}**`);
-      formattedLines.push('');
-      continue;
-    }
-    
-    // Check if line starts with a pillar name (Clareza:, Organização:, etc.)
-    const pillarMatch = line.match(/^(Clareza|Organização|Reputação|Expansão|Organização):\s*(.+)/i);
-    if (pillarMatch) {
-      // Add spacing before pillar items
-      formattedLines.push('');
-      formattedLines.push(`**${pillarMatch[1]}:** ${pillarMatch[2]}`);
-      continue;
-    }
-    
-    // Check if line is an action item (starts with verb or numbered)
-    const actionMatch = line.match(/^(\d+\.\s*)?([A-Z][^:]+):\s*(.+)/);
-    if (actionMatch && !pillarMatch) {
-      formattedLines.push('');
-      if (actionMatch[1]) {
-        // Numbered item
-        formattedLines.push(`${actionMatch[1]}**${actionMatch[2]}:** ${actionMatch[3]}`);
-      } else {
-        formattedLines.push(`• **${actionMatch[2]}:** ${actionMatch[3]}`);
+      
+      // Check for standalone pillar line (Clareza: ...)
+      const pillarMatch = line.match(/^(Clareza|Organização|Reputação|Expansão):\s*(.+)/i);
+      if (pillarMatch) {
+        processedLines.push(`\n**${pillarMatch[1]}:** ${pillarMatch[2]}\n`);
+        continue;
       }
-      continue;
+      
+      // Check for numbered items (1. Clareza: ... or 1. Action: ...)
+      const numberedMatch = line.match(/^(\d+)\.\s*([^:]+):\s*(.+)/);
+      if (numberedMatch) {
+        processedLines.push(`\n${numberedMatch[1]}. **${numberedMatch[2].trim()}:** ${numberedMatch[3]}\n`);
+        continue;
+      }
+      
+      // Regular line - keep as is
+      processedLines.push(line);
     }
     
-    // Regular paragraph - add spacing
-    if (formattedLines.length > 0 && formattedLines[formattedLines.length - 1] !== '') {
-      formattedLines.push('');
-    }
-    formattedLines.push(line);
+    formattedParagraphs.push(processedLines.join('\n'));
   }
   
-  // Clean up multiple consecutive newlines (max 2)
-  let result = formattedLines.join('\n');
+  // Join paragraphs with double line breaks for proper spacing
+  let result = formattedParagraphs.join('\n\n');
+  
+  // Ensure proper spacing: normalize multiple newlines to max 2
   result = result.replace(/\n{3,}/g, '\n\n');
+  
+  // Ensure there's always a blank line before headers for proper separation
+  result = result.replace(/([^\n])\n(## )/g, '$1\n\n$2');
   
   return result.trim();
 }
@@ -315,18 +325,48 @@ export function ResultView({
             </div>
           </CardHeader>
           <CardContent>
-            <div className="prose prose-sm md:prose-base max-w-none 
-                          prose-headings:font-display prose-headings:text-foreground
-                          prose-h2:text-xl prose-h2:font-bold prose-h2:mt-8 prose-h2:mb-4 prose-h2:pt-4 prose-h2:border-t prose-h2:border-accent/20 first:prose-h2:border-t-0 first:prose-h2:pt-0 first:prose-h2:mt-0
-                          prose-h3:text-lg prose-h3:font-semibold prose-h3:mt-6 prose-h3:mb-3
-                          prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:mb-5
-                          prose-strong:text-foreground prose-strong:font-semibold
-                          prose-ul:my-5 prose-ul:space-y-4 prose-ul:list-none prose-ul:pl-0
-                          prose-li:text-muted-foreground prose-li:leading-relaxed prose-li:mb-3
-                          prose-a:text-accent prose-a:no-underline hover:prose-a:underline
-                          [&>*:first-child]:mt-0
-                          [&>h2:first-child]:border-t-0 [&>h2:first-child]:pt-0">
-              <ReactMarkdown>{formatAIContent(aiContent)}</ReactMarkdown>
+            <div className="ai-content-wrapper space-y-6">
+              <ReactMarkdown
+                components={{
+                  h2: ({ children }) => (
+                    <h2 className="font-display text-xl font-bold text-foreground mt-8 mb-4 pt-6 border-t border-accent/20 first:border-t-0 first:pt-0 first:mt-0">
+                      {children}
+                    </h2>
+                  ),
+                  h3: ({ children }) => (
+                    <h3 className="font-display text-lg font-semibold text-foreground mt-6 mb-3">
+                      {children}
+                    </h3>
+                  ),
+                  p: ({ children }) => (
+                    <p className="text-muted-foreground leading-relaxed mb-5 text-base">
+                      {children}
+                    </p>
+                  ),
+                  strong: ({ children }) => (
+                    <strong className="text-foreground font-semibold">
+                      {children}
+                    </strong>
+                  ),
+                  ul: ({ children }) => (
+                    <ul className="space-y-4 my-5">
+                      {children}
+                    </ul>
+                  ),
+                  ol: ({ children }) => (
+                    <ol className="space-y-4 my-5 list-decimal list-inside">
+                      {children}
+                    </ol>
+                  ),
+                  li: ({ children }) => (
+                    <li className="text-muted-foreground leading-relaxed pl-2 border-l-2 border-accent/30 ml-2">
+                      {children}
+                    </li>
+                  ),
+                }}
+              >
+                {formatAIContent(aiContent)}
+              </ReactMarkdown>
             </div>
           </CardContent>
         </Card>
