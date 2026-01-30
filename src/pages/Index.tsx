@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, Shield, Target, Zap, TrendingDown, CheckCircle2 } from "lucide-react";
@@ -12,12 +12,13 @@ const PILLAR_ICONS: Record<Pillar, React.ElementType> = {
 };
 
 const Index = () => {
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section - Premium Black & White */}
       <section className="relative overflow-hidden border-b border-border">
-        <div className="absolute inset-0 bg-gradient-to-br from-foreground/[0.02] to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-br from-foreground/[0.02] to-transparent pointer-events-none" />
         <div className="container max-w-5xl mx-auto px-4 py-20 md:py-28">
           <div className="text-center space-y-8 animate-fade-in">
             <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium shadow-sm">
@@ -39,14 +40,12 @@ const Index = () => {
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
               <Button
-                asChild
                 size="lg"
                 className="text-base px-8 h-12 shadow-elevated"
+                onClick={() => navigate("/checkup")}
               >
-                <Link to="/checkup">
-                  Iniciar Checkup de Credibilidade
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </Link>
+                Iniciar Checkup de Credibilidade
+                <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </div>
 
