@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import ReactMarkdown from "react-markdown";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -14,9 +15,9 @@ import {
   Zap,
   Shield,
   TrendingDown,
-  ArrowRight,
   Home,
   Lightbulb,
+  Sparkles,
 } from "lucide-react";
 import { PILLAR_NAMES, RISK_BANDS, type Pillar, type RiskBand } from "@/lib/questionBank";
 import { generateDetailedActions } from "@/lib/recommendationEngine";
@@ -213,25 +214,33 @@ export function ResultView({
 
       {/* AI-Generated Content (from n8n webhook) */}
       {aiContent && (
-        <Card className="card-elevated border-accent/30 bg-accent/5">
-          <CardHeader>
-            <CardTitle className="font-display text-2xl flex items-center gap-2">
-              <Lightbulb className="w-6 h-6 text-accent" />
-              Análise Personalizada para {identity.companyName}
-            </CardTitle>
-            <CardDescription className="text-base">
-              Diagnóstico gerado com base nas suas respostas específicas
-            </CardDescription>
+        <Card className="card-elevated border-accent/30 bg-gradient-to-br from-accent/5 to-transparent">
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-accent" />
+              </div>
+              <div>
+                <CardTitle className="font-display text-2xl">
+                  Análise Personalizada
+                </CardTitle>
+                <CardDescription className="text-base">
+                  Diagnóstico exclusivo para {identity.companyName}
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="prose prose-sm max-w-none text-muted-foreground leading-relaxed">
-              {aiContent.split('\n').map((paragraph, index) => (
-                paragraph.trim() && (
-                  <p key={index} className="mb-4 last:mb-0">
-                    {paragraph}
-                  </p>
-                )
-              ))}
+            <div className="prose prose-sm md:prose-base max-w-none 
+                          prose-headings:font-display prose-headings:text-foreground prose-headings:font-semibold
+                          prose-h2:text-xl prose-h2:mt-6 prose-h2:mb-3
+                          prose-h3:text-lg prose-h3:mt-4 prose-h3:mb-2
+                          prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:mb-4
+                          prose-strong:text-foreground prose-strong:font-semibold
+                          prose-ul:my-4 prose-ul:space-y-2
+                          prose-li:text-muted-foreground prose-li:leading-relaxed
+                          prose-a:text-accent prose-a:no-underline hover:prose-a:underline">
+              <ReactMarkdown>{aiContent}</ReactMarkdown>
             </div>
           </CardContent>
         </Card>
