@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -9,16 +10,19 @@ import {
   FileText,
   AlertTriangle,
   CheckCircle2,
-  AlertCircle,
   Target,
   Zap,
   Shield,
   TrendingDown,
   ArrowRight,
+  Home,
+  Lightbulb,
 } from "lucide-react";
 import { PILLAR_NAMES, RISK_BANDS, type Pillar, type RiskBand } from "@/lib/questionBank";
+import { generateDetailedActions } from "@/lib/recommendationEngine";
 import type { Submission } from "@/types/checkup";
 import { cn } from "@/lib/utils";
+import { CRPGauge } from "./CRPGauge";
 
 interface ResultViewProps {
   submission: Submission;
@@ -40,22 +44,18 @@ const RISK_COLORS: Record<RiskBand, { bg: string; text: string; border: string }
   high: { bg: "bg-risk-high/10", text: "text-risk-high", border: "border-risk-high" },
 };
 
-const RISK_ICONS: Record<RiskBand, React.ElementType> = {
-  low: CheckCircle2,
-  medium: AlertCircle,
-  high: AlertTriangle,
-};
-
 export function ResultView({
   submission,
   onSchedule,
   onDownloadPDF,
   onDownloadMarkdown,
 }: ResultViewProps) {
-  const { crp, pillars, topGaps, output, identity } = submission;
+  const navigate = useNavigate();
+  const { crp, pillars, topGaps, identity } = submission;
   const riskInfo = RISK_BANDS[crp.band];
-  const RiskIcon = RISK_ICONS[crp.band];
-  const riskColors = RISK_COLORS[crp.band];
+
+  // Generate detailed actions based on answers
+  const detailedResult = generateDetailedActions(crp.band, pillars, topGaps);
 
   // Sort pillars by risk for display
   const sortedPillars = (["C", "O", "R", "E"] as Pillar[]).sort(
@@ -63,51 +63,52 @@ export function ResultView({
   );
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-10 animate-fade-in">
+      {/* Export buttons at top */}
+      <div className="flex flex-wrap gap-3 justify-end">
+        {onDownloadPDF && (
+          <Button size="sm" variant="outline" onClick={onDownloadPDF}>
+            <Download className="w-4 h-4 mr-2" />
+            Salvar PDF
+          </Button>
+        )}
+        {onDownloadMarkdown && (
+          <Button size="sm" variant="outline" onClick={onDownloadMarkdown}>
+            <FileText className="w-4 h-4 mr-2" />
+            Salvar Markdown
+          </Button>
+        )}
+      </div>
+
       {/* Header with company name */}
       <div className="text-center space-y-2">
-        <h1 className="font-display text-3xl font-bold text-foreground">
-          Resultado do Checkup
+        <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground">
+          Resultado do Checkup de Credibilidade
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground text-lg">
           {identity.companyName} · {identity.personName}
         </p>
       </div>
 
-      {/* Main CRP Score Card */}
-      <Card className={cn("border-2", riskColors.border)}>
-        <CardContent className="p-8">
-          <div className="flex flex-col md:flex-row items-center gap-8">
-            {/* Score Circle */}
-            <div className="relative">
-              <div
-                className={cn(
-                  "w-36 h-36 rounded-full flex flex-col items-center justify-center border-4",
-                  riskColors.border,
-                  riskColors.bg
-                )}
-              >
-                <span className={cn("font-display text-5xl font-bold", riskColors.text)}>
-                  {crp.score.toFixed(1)}
-                </span>
-                <span className="text-sm text-muted-foreground">de 10</span>
-              </div>
-            </div>
+      {/* Main CRP Gauge */}
+      <Card className="border-2 border-foreground/10">
+        <CardContent className="p-8 md:p-12">
+          <CRPGauge score={crp.score} band={crp.band} />
+        </CardContent>
+      </Card>
 
-            {/* Score Interpretation */}
-            <div className="flex-1 text-center md:text-left space-y-4">
-              <div className="flex items-center gap-3 justify-center md:justify-start">
-                <RiskIcon className={cn("w-6 h-6", riskColors.text)} />
-                <Badge variant="outline" className={cn("text-base px-4 py-1", riskColors.border, riskColors.text)}>
-                  Risco {riskInfo.label}
-                </Badge>
-              </div>
-              <p className="text-lg text-muted-foreground">{riskInfo.description}</p>
-              <div className="text-sm text-muted-foreground">
-                CRP baixo (0–2,9) = decisão flui · médio (3–5,4) = fricção · alto (5,5–10) = travamento
-              </div>
-            </div>
-          </div>
+      {/* Impact Explanation - Dynamic based on band */}
+      <Card className="card-elevated">
+        <CardHeader>
+          <CardTitle className="font-display text-xl flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-accent" />
+            O que isso significa para suas vendas?
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground leading-relaxed text-base">
+            {detailedResult.impactExplanation}
+          </p>
         </CardContent>
       </Card>
 
@@ -164,10 +165,10 @@ export function ResultView({
         <CardHeader>
           <CardTitle className="font-display text-xl flex items-center gap-2">
             <AlertTriangle className="w-5 h-5 text-risk-high" />
-            Top 3 Gargalos
+            Top 3 Gargalos Identificados
           </CardTitle>
           <CardDescription>
-            As perguntas com menores notas — prioridades de correção
+            As perguntas com menores notas — prioridades de correção imediata
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -189,7 +190,6 @@ export function ResultView({
                       <Icon className="w-3 h-3 mr-1" />
                       {PILLAR_NAMES[gap.pillar]}
                     </Badge>
-                    <span className="text-xs text-muted-foreground">{gap.questionId}</span>
                     <Badge variant="destructive" className="text-xs">
                       Nota {gap.score}
                     </Badge>
@@ -202,54 +202,107 @@ export function ResultView({
         </CardContent>
       </Card>
 
-      {/* Recommendation */}
+      {/* Emergency Actions - Detailed */}
       <Card className="card-elevated border-accent/30 bg-accent/5">
         <CardHeader>
-          <CardTitle className="font-display text-xl flex items-center gap-2">
-            <CheckCircle2 className="w-5 h-5 text-accent" />
-            Recomendação
+          <CardTitle className="font-display text-2xl flex items-center gap-2">
+            <Lightbulb className="w-6 h-6 text-accent" />
+            Ações Emergenciais Para Elevar o CRP
           </CardTitle>
+          <CardDescription className="text-base">
+            Baseado nas suas respostas, estas são as 3 ações com maior impacto potencial
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <p className="text-lg font-medium text-foreground">{output.sentence}</p>
-          <Separator />
-          <div className="space-y-3">
-            <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-              Próximos passos
-            </p>
-            <ul className="space-y-3">
-              {output.bullets.map((bullet, index) => (
-                <li key={index} className="flex gap-3">
-                  <ArrowRight className="w-4 h-4 text-accent flex-shrink-0 mt-1" />
-                  <span className="text-foreground">{bullet}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+        <CardContent className="space-y-8">
+          {detailedResult.actions.map((action, index) => {
+            const Icon = PILLAR_ICONS[action.pillar];
+            return (
+              <div key={index} className="space-y-4">
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center">
+                    <span className="font-display text-xl font-bold text-accent">
+                      {index + 1}
+                    </span>
+                  </div>
+                  <div className="flex-1 space-y-3">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge className="bg-foreground text-background">
+                        <Icon className="w-3 h-3 mr-1" />
+                        {action.pillarName}
+                      </Badge>
+                    </div>
+                    <h3 className="font-display font-semibold text-lg text-foreground">
+                      {action.action}
+                    </h3>
+                    
+                    <div className="space-y-3 pl-0 md:pl-4 border-l-0 md:border-l-2 border-accent/20">
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium text-foreground">Por que isso é essencial?</p>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          {action.why}
+                        </p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium text-foreground">Impacto esperado:</p>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          {action.impact}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {index < detailedResult.actions.length - 1 && (
+                  <Separator className="my-6" />
+                )}
+              </div>
+            );
+          })}
         </CardContent>
       </Card>
 
-      {/* Actions */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-center">
-        {onSchedule && (
-          <Button size="lg" onClick={onSchedule} className="bg-accent hover:bg-accent/90">
-            <Calendar className="w-5 h-5 mr-2" />
-            Agendar Devolutiva
-          </Button>
-        )}
-        {onDownloadPDF && (
-          <Button size="lg" variant="outline" onClick={onDownloadPDF}>
-            <Download className="w-5 h-5 mr-2" />
-            Baixar PDF
-          </Button>
-        )}
-        {onDownloadMarkdown && (
-          <Button size="lg" variant="outline" onClick={onDownloadMarkdown}>
-            <FileText className="w-5 h-5 mr-2" />
-            Baixar Markdown
-          </Button>
-        )}
-      </div>
+      {/* CTA for Credibility Machine */}
+      <Card className="card-elevated border-foreground/20 bg-foreground/[0.02]">
+        <CardHeader>
+          <CardTitle className="font-display text-xl flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5 text-accent" />
+            Por que implementar uma Máquina de Geração de Credibilidade?
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground leading-relaxed text-base">
+            {detailedResult.ctaExplanation}
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Footer CTA Section */}
+      <Card className="border-2 border-accent bg-accent/5">
+        <CardContent className="p-8 text-center space-y-6">
+          <div className="space-y-2">
+            <h2 className="font-display text-2xl font-bold text-foreground">
+              Quer uma análise personalizada?
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Nossa equipe está disponível para entrar em mais detalhes de como melhorar o 
+              Coeficiente de Risco Percebido da sua marca, baseado nas respostas que você deu, 
+              de forma completamente personalizada.
+            </p>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            {onSchedule && (
+              <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground" onClick={onSchedule}>
+                <Calendar className="w-5 h-5 mr-2" />
+                AGENDAR DEVOLUTIVA
+              </Button>
+            )}
+            <Button size="lg" variant="outline" onClick={() => navigate("/")}>
+              <Home className="w-5 h-5 mr-2" />
+              Finalizar Diagnóstico
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

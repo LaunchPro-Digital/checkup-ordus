@@ -148,9 +148,8 @@ export default function Checkup() {
             <AlertCircle className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
             <div className="text-sm text-muted-foreground">
               <strong className="text-foreground">Sobre este diagnóstico:</strong> O CRP mede{" "}
-              <em>risco percebido</em> (o que o cliente acha que pode dar errado), não risco real.
-              Ele avalia até a qualificação e o repasse ao comercial — rotinas de vendas e entrega
-              operacional são temas separados.
+              <em>risco percebido</em> (o que o cliente acha que pode dar errado) ao comprar da sua marca.
+              Antes de falar com sua equipe, ele já terá definido um CRP mínimo da sua marca que influenciará na decisão de compra.
             </div>
           </div>
         )}
