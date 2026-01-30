@@ -11,7 +11,7 @@ function generatePDFHTML(submission: Submission): string {
   const pillarKeys: ("C" | "O" | "R" | "E")[] = ["C", "O", "R", "E"];
   const sortedPillars = [...pillarKeys].sort((a, b) => pillars[b].risk - pillars[a].risk);
 
-  const riskColor = crp.band === "low" ? "#22c55e" : crp.band === "medium" ? "#eab308" : "#ef4444";
+  const riskColor = crp.band === "low" ? "#0e7490" : crp.band === "medium" ? "#eab308" : "#ef4444";
 
   return `
 <!DOCTYPE html>

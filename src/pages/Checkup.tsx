@@ -1,15 +1,13 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { AppShell } from "@/components/layout/AppShell";
 import { WizardStepper, type WizardStep } from "@/components/wizard/WizardStepper";
 import { IdentityForm } from "@/components/wizard/IdentityForm";
 import { ChannelSelector } from "@/components/wizard/ChannelSelector";
 import { CheckupForm } from "@/components/wizard/CheckupForm";
-import { ResultView } from "@/components/result/ResultView";
 import { useWizardDraft } from "@/hooks/useWizardDraft";
 import { calculateCRP } from "@/lib/crpEngine";
 import { generateRecommendation } from "@/lib/recommendationEngine";
-import { downloadMarkdown } from "@/lib/markdownExporter";
-import { downloadPDF } from "@/lib/pdfExporter";
 import type { Identity, Channel, Answer, Submission } from "@/types/checkup";
 import { AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -18,13 +16,12 @@ const WIZARD_STEPS: WizardStep[] = [
   { id: "identify", label: "Identificação", description: "Dados da empresa" },
   { id: "channels", label: "Canais", description: "Presença online" },
   { id: "checkup", label: "Checkup", description: "20 perguntas" },
-  { id: "result", label: "Resultado", description: "Diagnóstico CRP" },
 ];
 
 export default function Checkup() {
+  const navigate = useNavigate();
   const { draft, isLoaded, updateStep, updateIdentity, updateChannels, setAnswer, clearDraft } = useWizardDraft();
   const [currentStep, setCurrentStep] = useState(0);
-  const [submission, setSubmission] = useState<Submission | null>(null);
   const { toast } = useToast();
 
   // Sync step from draft when loaded
@@ -73,51 +70,18 @@ export default function Checkup() {
         topGaps: crpResult.topGaps,
         output: recommendation,
       };
-
-      setSubmission(newSubmission);
-      goToStep(3);
       
       // Clear draft after successful submission
       clearDraft();
       
-      toast({
-        title: "Checkup concluído!",
-        description: `Seu CRP é ${crpResult.crp.score.toFixed(1)} - Risco ${crpResult.crp.band === "low" ? "Baixo" : crpResult.crp.band === "medium" ? "Médio" : "Alto"}`,
-      });
+      // Navigate to results page with submission data
+      navigate("/resultados", { state: { submission: newSubmission } });
     } catch (error) {
       console.error("Error calculating CRP:", error);
       toast({
         title: "Erro ao processar",
         description: "Ocorreu um erro ao calcular o CRP. Tente novamente.",
         variant: "destructive",
-      });
-    }
-  };
-
-  const handleSchedule = () => {
-    // TODO: Open agenda URL when configured
-    toast({
-      title: "Agendamento",
-      description: "O link de agendamento será configurado nas Integrações.",
-    });
-  };
-
-  const handleDownloadPDF = () => {
-    if (submission) {
-      downloadPDF(submission);
-      toast({
-        title: "PDF",
-        description: "O relatório será aberto para impressão/download.",
-      });
-    }
-  };
-
-  const handleDownloadMarkdown = () => {
-    if (submission) {
-      downloadMarkdown(submission);
-      toast({
-        title: "Markdown",
-        description: "Arquivo .md baixado com sucesso.",
       });
     }
   };
@@ -147,9 +111,7 @@ export default function Checkup() {
           <div className="rounded-lg border border-foreground/10 bg-muted/50 p-4 flex gap-3 animate-fade-in">
             <AlertCircle className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
             <div className="text-sm text-muted-foreground">
-              <strong className="text-foreground">Sobre este diagnóstico:</strong> O CRP mede{" "}
-              <em>risco percebido</em> (o que o cliente acha que pode dar errado) ao comprar da sua marca.
-              Antes de falar com sua equipe, ele já terá definido um CRP mínimo da sua marca que influenciará na decisão de compra.
+              <strong className="text-foreground">Sobre este diagnóstico:</strong> O Coeficiente de Risco Percebido (CRP) mede o índice de desconfiança que o cliente tem sobre seu negócio. Quanto maior o índice, maior o risco e mais tempo ele demora para decidir. Ou desiste.
             </div>
           </div>
         )}
@@ -176,15 +138,6 @@ export default function Checkup() {
             onSubmit={handleCheckupSubmit}
             onBack={() => goToStep(1)}
             onAnswerChange={setAnswer}
-          />
-        )}
-
-        {currentStep === 3 && submission && (
-          <ResultView
-            submission={submission}
-            onSchedule={handleSchedule}
-            onDownloadPDF={handleDownloadPDF}
-            onDownloadMarkdown={handleDownloadMarkdown}
           />
         )}
       </div>
