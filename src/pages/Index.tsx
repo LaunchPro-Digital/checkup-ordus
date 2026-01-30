@@ -23,18 +23,19 @@ const Index = () => {
           <div className="text-center space-y-8 animate-fade-in">
             <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium shadow-sm">
               <CheckCircle2 className="w-4 h-4 text-accent" />
-              Diagnóstico gratuito em 5 minutos
+              Diagnóstico completo em 5 minutos
             </div>
             
             <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-foreground tracking-tight leading-[1.1]">
-              Descubra o que trava
+              Descubra o CRP atual
               <br />
-              <span className="text-gradient">suas vendas</span>
+              <span className="text-accent">da sua marca</span>
             </h1>
             
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              O CRP mede o <strong className="text-foreground">risco percebido</strong> pelo seu cliente.
-              Quanto maior o risco, mais tempo ele demora para decidir — ou desiste.
+              O <strong className="text-foreground">Coeficiente de Risco Percebido (CRP)</strong> mede o índice de desconfiança que o cliente tem sobre seu negócio.
+              <br className="hidden md:block" />
+              Quanto maior o índice, maior o risco e mais tempo ele demora para decidir. Ou desiste.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
@@ -43,7 +44,7 @@ const Index = () => {
                 className="text-base px-8 h-12 shadow-elevated"
                 onClick={() => navigate("/checkup")}
               >
-                Fazer Checkup Gratuito
+                Iniciar Checkup de Credibilidade
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </div>
@@ -60,7 +61,7 @@ const Index = () => {
         <div className="container max-w-5xl mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center space-y-6">
             <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground">
-              O que é o CRP?
+              O que é o CRP, na prática?
             </h2>
             <p className="text-muted-foreground text-lg leading-relaxed">
               <strong className="text-foreground">CRP = Coeficiente de Risco Percebido.</strong>
@@ -194,7 +195,7 @@ const Index = () => {
             className="text-base px-8 h-12 shadow-elevated"
             onClick={() => navigate("/checkup")}
           >
-            Começar Agora
+            Iniciar Checkup
             <ArrowRight className="w-5 h-5 ml-2" />
           </Button>
         </div>
