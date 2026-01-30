@@ -115,7 +115,7 @@ export default function Resultados() {
   const handleDownloadPDF = async () => {
     if (submission) {
       const { downloadPDF } = await import("@/lib/pdfExporter");
-      downloadPDF(submission);
+      downloadPDF(submission, aiContent);
       toast({
         title: "PDF",
         description: "O relatório será aberto para impressão/download.",
@@ -126,7 +126,7 @@ export default function Resultados() {
   const handleDownloadMarkdown = async () => {
     if (submission) {
       const { downloadMarkdown } = await import("@/lib/markdownExporter");
-      downloadMarkdown(submission);
+      downloadMarkdown(submission, aiContent);
       toast({
         title: "Markdown",
         description: "Arquivo .md baixado com sucesso.",

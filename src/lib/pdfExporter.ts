@@ -4,7 +4,7 @@
 import { PILLAR_NAMES, RISK_BANDS, QUESTION_BANK_VERSION } from "./questionBank";
 import type { Submission } from "@/types/checkup";
 
-function generatePDFHTML(submission: Submission): string {
+function generatePDFHTML(submission: Submission, aiContent?: string | null): string {
   const { identity, crp, pillars, topGaps, output, channels, createdAt } = submission;
   const riskInfo = RISK_BANDS[crp.band];
 
@@ -186,6 +186,25 @@ function generatePDFHTML(submission: Submission): string {
     )
     .join("")}
 
+  ${
+    aiContent
+      ? `
+  <h2>Análise Personalizada</h2>
+  <div class="recommendation" style="background: #f5f3ff; border-color: #c4b5fd;">
+    ${aiContent
+      .split("\n")
+      .map((line) => {
+        if (line.startsWith("## ")) return `<h3 style="margin-top: 16px;">${line.substring(3)}</h3>`;
+        if (line.startsWith("### ")) return `<h4 style="margin-top: 12px;">${line.substring(4)}</h4>`;
+        if (line.startsWith("- **")) return `<li style="margin: 4px 0;"><strong>${line.substring(4).replace("**:", ":</strong>")}</li>`;
+        if (line.startsWith("- ")) return `<li style="margin: 4px 0;">${line.substring(2)}</li>`;
+        if (line.trim() === "") return "";
+        return `<p>${line.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")}</p>`;
+      })
+      .join("")}
+  </div>
+  `
+      : `
   <h2>Recomendação</h2>
   <div class="recommendation">
     <p class="recommendation-title">${output.sentence}</p>
@@ -194,6 +213,8 @@ function generatePDFHTML(submission: Submission): string {
       ${output.bullets.map((b) => `<li>${b}</li>`).join("")}
     </ul>
   </div>
+  `
+  }
 
   ${
     channels.length > 0
@@ -214,8 +235,8 @@ function generatePDFHTML(submission: Submission): string {
   `;
 }
 
-export function downloadPDF(submission: Submission): void {
-  const html = generatePDFHTML(submission);
+export function downloadPDF(submission: Submission, aiContent?: string | null): void {
+  const html = generatePDFHTML(submission, aiContent);
   const printWindow = window.open("", "_blank");
   if (printWindow) {
     printWindow.document.write(html);

@@ -3,7 +3,7 @@
 import { PILLAR_NAMES, RISK_BANDS, QUESTION_BANK_VERSION } from "./questionBank";
 import type { Submission } from "@/types/checkup";
 
-export function generateMarkdown(submission: Submission): string {
+export function generateMarkdown(submission: Submission, aiContent?: string | null): string {
   const { identity, crp, pillars, topGaps, output, channels, createdAt } = submission;
   const riskInfo = RISK_BANDS[crp.band];
 
@@ -59,17 +59,24 @@ export function generateMarkdown(submission: Submission): string {
     lines.push(``);
   }
 
-  // Recommendation
-  lines.push(`## Recomendação`);
-  lines.push(``);
-  lines.push(`**${output.sentence}**`);
-  lines.push(``);
-  lines.push(`### Próximos Passos`);
-  lines.push(``);
-  for (const bullet of output.bullets) {
-    lines.push(`- ${bullet}`);
+  // AI Content or Recommendation
+  if (aiContent) {
+    lines.push(`## Análise Personalizada`);
+    lines.push(``);
+    lines.push(aiContent);
+    lines.push(``);
+  } else {
+    lines.push(`## Recomendação`);
+    lines.push(``);
+    lines.push(`**${output.sentence}**`);
+    lines.push(``);
+    lines.push(`### Próximos Passos`);
+    lines.push(``);
+    for (const bullet of output.bullets) {
+      lines.push(`- ${bullet}`);
+    }
+    lines.push(``);
   }
-  lines.push(``);
 
   // Channels
   if (channels.length > 0) {
@@ -90,8 +97,8 @@ export function generateMarkdown(submission: Submission): string {
   return lines.join("\n");
 }
 
-export function downloadMarkdown(submission: Submission): void {
-  const content = generateMarkdown(submission);
+export function downloadMarkdown(submission: Submission, aiContent?: string | null): void {
+  const content = generateMarkdown(submission, aiContent);
   const blob = new Blob([content], { type: "text/markdown;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
