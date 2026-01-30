@@ -46,6 +46,42 @@ const RISK_COLORS: Record<RiskBand, { bg: string; text: string; border: string }
   high: { bg: "bg-risk-high/10", text: "text-risk-high", border: "border-risk-high" },
 };
 
+// Pre-process AI content to convert section titles to proper Markdown headers
+function formatAIContent(content: string): string {
+  // List of known section titles that should become h2 headers
+  const sectionTitles = [
+    "Resumo Executivo",
+    "Leitura por Pilar",
+    "Top Gaps com Direção de Correção",
+    "Top Gaps",
+    "Plano de Ação",
+    "Plano Mínimo",
+    "CTA Final",
+    "Como está o seu CORE hoje?",
+    "Análise por Pilar",
+    "Recomendações",
+    "Próximos Passos",
+  ];
+  
+  let formatted = content;
+  
+  // Convert known section titles to h2 headers
+  sectionTitles.forEach(title => {
+    // Match title at start of line (with or without existing markdown)
+    const regex = new RegExp(`^(#{0,3}\\s*)?${title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`, 'gim');
+    formatted = formatted.replace(regex, `\n## ${title}\n`);
+  });
+  
+  // Add spacing after bullet points that have bold titles (like "- **Clareza**:")
+  formatted = formatted.replace(/^(- \*\*[^*]+\*\*:)/gm, '\n$1');
+  
+  // Clean up multiple consecutive newlines (max 2)
+  formatted = formatted.replace(/\n{3,}/g, '\n\n');
+  
+  // Trim leading/trailing whitespace
+  return formatted.trim();
+}
+
 export function ResultView({
   submission,
   aiContent,
@@ -233,14 +269,15 @@ export function ResultView({
           <CardContent>
             <div className="prose prose-sm md:prose-base max-w-none 
                           prose-headings:font-display prose-headings:text-foreground prose-headings:font-semibold
-                          prose-h2:text-xl prose-h2:mt-6 prose-h2:mb-3
-                          prose-h3:text-lg prose-h3:mt-4 prose-h3:mb-2
+                          prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4 prose-h2:pb-2 prose-h2:border-b prose-h2:border-accent/20
+                          prose-h3:text-lg prose-h3:mt-6 prose-h3:mb-3
                           prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:mb-4
                           prose-strong:text-foreground prose-strong:font-semibold
-                          prose-ul:my-4 prose-ul:space-y-2
-                          prose-li:text-muted-foreground prose-li:leading-relaxed
-                          prose-a:text-accent prose-a:no-underline hover:prose-a:underline">
-              <ReactMarkdown>{aiContent}</ReactMarkdown>
+                          prose-ul:my-4 prose-ul:space-y-3 prose-ul:list-none prose-ul:pl-0
+                          prose-li:text-muted-foreground prose-li:leading-relaxed prose-li:pl-4 prose-li:border-l-2 prose-li:border-accent/30 prose-li:mb-4
+                          prose-a:text-accent prose-a:no-underline hover:prose-a:underline
+                          [&>*:first-child]:mt-0">
+              <ReactMarkdown>{formatAIContent(aiContent)}</ReactMarkdown>
             </div>
           </CardContent>
         </Card>
