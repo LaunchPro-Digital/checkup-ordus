@@ -2,11 +2,14 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AppShell } from "@/components/layout/AppShell";
 import { ResultView } from "@/components/result/ResultView";
-import { Loader2 } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { Submission } from "@/types/checkup";
 import { useToast } from "@/hooks/use-toast";
 
-const WEBHOOK_STORAGE_KEY = "crp_integration_settings";
+// URLs fixas (protegidas no código)
+const WEBHOOK_URL = "https://webhook.launchpro.digital/webhook/checkup_respostas";
+const AGENDA_URL = "https://devolutiva.ordusdigital.com.br/checkup-de-credibilidade";
 
 export default function Resultados() {
   const navigate = useNavigate();
@@ -39,16 +42,6 @@ export default function Resultados() {
 
   const sendWebhookAndWaitForResponse = async (sub: Submission) => {
     try {
-      // Get webhook settings from localStorage
-      const settingsStr = localStorage.getItem(WEBHOOK_STORAGE_KEY);
-      const settings = settingsStr ? JSON.parse(settingsStr) : null;
-      
-      if (!settings?.webhookUrl || !settings?.webhookEnabled) {
-        // No webhook configured, just show results without AI content
-        setIsLoading(false);
-        return;
-      }
-
       const payload = {
         event: "checkup.completed",
         submission_id: sub.id,
@@ -61,20 +54,14 @@ export default function Resultados() {
         top_gaps: sub.topGaps,
         output: sub.output,
         integrations: {
-          agenda_url: settings.agendaUrl || "",
+          agenda_url: AGENDA_URL,
         },
       };
 
-      // Generate HMAC signature
-      const signature = settings.webhookSecret 
-        ? await generateHMAC(JSON.stringify(payload), settings.webhookSecret)
-        : "no-secret";
-
-      const response = await fetch(settings.webhookUrl, {
+      const response = await fetch(WEBHOOK_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-Ordus-Signature": `sha256=${signature}`,
         },
         body: JSON.stringify(payload),
       });
@@ -97,17 +84,7 @@ export default function Resultados() {
   };
 
   const handleSchedule = () => {
-    const settingsStr = localStorage.getItem(WEBHOOK_STORAGE_KEY);
-    const settings = settingsStr ? JSON.parse(settingsStr) : null;
-    
-    if (settings?.agendaUrl) {
-      window.open(settings.agendaUrl, "_blank");
-    } else {
-      toast({
-        title: "Agendamento",
-        description: "O link de agendamento será configurado nas Integrações.",
-      });
-    }
+    window.open(AGENDA_URL, "_blank");
   };
 
   const handleDownloadPDF = async () => {
@@ -135,17 +112,54 @@ export default function Resultados() {
   if (isLoading) {
     return (
       <AppShell>
-        <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6 animate-fade-in">
-          <div className="relative">
-            <div className="w-20 h-20 rounded-full border-4 border-muted" />
-            <Loader2 className="w-20 h-20 absolute top-0 left-0 animate-spin text-accent" />
+        <div className="space-y-8 animate-fade-in">
+          {/* Header skeleton */}
+          <div className="text-center space-y-4">
+            <Skeleton className="h-8 w-64 mx-auto" />
+            <Skeleton className="h-4 w-48 mx-auto" />
           </div>
+
+          {/* Gauge skeleton */}
+          <div className="flex flex-col items-center justify-center py-12 space-y-6">
+            <div className="relative">
+              <Skeleton className="w-64 h-32 rounded-t-full" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Loader2 className="w-12 h-12 animate-spin text-accent" />
+              </div>
+            </div>
+            <div className="text-center space-y-2">
+              <Skeleton className="h-6 w-80 mx-auto" />
+              <Skeleton className="h-4 w-40 mx-auto" />
+            </div>
+          </div>
+
+          {/* AI Analysis skeleton */}
+          <div className="rounded-xl border border-accent/30 bg-gradient-to-br from-accent/5 to-transparent p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-accent animate-pulse" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-6 w-48" />
+                <Skeleton className="h-4 w-32" />
+              </div>
+            </div>
+            <div className="space-y-3 pt-4">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-11/12" />
+              <Skeleton className="h-4 w-10/12" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-9/12" />
+            </div>
+          </div>
+
+          {/* Message */}
           <div className="text-center space-y-2">
-            <h2 className="font-display text-2xl font-semibold text-foreground">
-              Carregando resultados...
-            </h2>
-            <p className="text-muted-foreground max-w-md">
-              Estamos analisando suas respostas e preparando um diagnóstico personalizado para sua marca.
+            <p className="text-lg font-medium text-foreground animate-pulse">
+              Analisando suas respostas com IA...
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Isso pode levar até 1 minuto. Por favor, aguarde.
             </p>
           </div>
         </div>
@@ -170,27 +184,3 @@ export default function Resultados() {
   );
 }
 
-// Helper: Generate HMAC-SHA256 signature
-async function generateHMAC(message: string, secret: string): Promise<string> {
-  if (!secret) return "no-secret";
-  
-  const encoder = new TextEncoder();
-  const keyData = encoder.encode(secret);
-  const messageData = encoder.encode(message);
-
-  try {
-    const cryptoKey = await crypto.subtle.importKey(
-      "raw",
-      keyData,
-      { name: "HMAC", hash: "SHA-256" },
-      false,
-      ["sign"]
-    );
-
-    const signature = await crypto.subtle.sign("HMAC", cryptoKey, messageData);
-    const hashArray = Array.from(new Uint8Array(signature));
-    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-  } catch {
-    return "hmac-error";
-  }
-}
