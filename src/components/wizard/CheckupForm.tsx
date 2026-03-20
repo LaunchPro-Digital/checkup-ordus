@@ -128,10 +128,10 @@ export function CheckupForm({ initialAnswers = [], onSubmit, onBack, onAnswerCha
                 ) : (
                   <div className="w-4 h-4 rounded-full border-2 border-border flex-shrink-0" />
                 )}
-                <span className={cn("font-medium text-sm", isCurrent ? "text-foreground" : "text-muted-foreground")}>
+                <span className={cn("font-label text-[11px] tracking-wide", isCurrent ? "text-foreground" : "text-muted-foreground")}>
                   {PILLAR_NAMES[pillar]}
                 </span>
-                <span className="text-xs text-muted-foreground">{answered}/{questions.length}</span>
+                <span className="font-handle text-[10px] text-muted-foreground">{answered}/{questions.length}</span>
               </button>
             );
           })}
