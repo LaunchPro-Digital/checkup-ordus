@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   ArrowLeft, ArrowRight, Plus, X, Globe, Instagram, Linkedin,
@@ -73,7 +72,6 @@ export function ChannelSelector({ initialChannels = [], onSubmit, onBack }: Chan
     setOtherChannels((prev) => prev.map((c, i) => (i === index ? { ...c, [field]: value } : c)));
 
   const handleSubmit = () => {
-    // #11 — alertar canais selecionados sem URL (aviso, não bloqueio)
     const channelsWithoutUrl = CHANNEL_OPTIONS.filter(
       (opt) => selectedTypes.has(opt.type) && !channelUrls[opt.type]?.trim()
     );
@@ -105,16 +103,21 @@ export function ChannelSelector({ initialChannels = [], onSubmit, onBack }: Chan
   };
 
   return (
-    <Card className="motion-safe:animate-fade-in card-elevated">
-      <CardHeader>
-        <CardTitle className="font-display text-2xl">Canais de Presença</CardTitle>
-        <CardDescription>
-          Selecione onde sua empresa tem presença online e adicione os links.
+    <div className="w-full max-w-2xl mx-auto motion-safe:animate-fade-in space-y-6">
+      <div className="text-center">
+        <h2
+          className="font-sans font-black uppercase leading-none mb-3"
+          style={{ fontSize: 'clamp(1.5rem, 4vw, 2.25rem)', letterSpacing: '-0.02em', color: '#F0F0F3' }}
+        >
+          Canais de Presença
+        </h2>
+        <p className="text-sm md:text-base" style={{ color: '#ABABAB' }}>
+          Selecione onde sua empresa tem presença online e adicione os links.{' '}
           Esses canais serão analisados pela IA para gerar sua devolutiva personalizada.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Standard Channels */}
+        </p>
+      </div>
+
+      <div className="card-elevated p-6 md:p-8 space-y-6">
         <div className="grid gap-4 sm:grid-cols-2">
           {CHANNEL_OPTIONS.map((option) => {
             const Icon = CHANNEL_ICONS[option.type];
@@ -134,10 +137,7 @@ export function ChannelSelector({ initialChannels = [], onSubmit, onBack }: Chan
                     checked={isSelected}
                     onCheckedChange={() => toggleChannel(option.type)}
                   />
-                  <Label
-                    htmlFor={option.type}
-                    className="flex items-center gap-2 cursor-pointer font-medium"
-                  >
+                  <Label htmlFor={option.type} className="flex items-center gap-2 cursor-pointer font-medium">
                     <Icon className="w-4 h-4" />
                     {option.label}
                   </Label>
@@ -155,7 +155,6 @@ export function ChannelSelector({ initialChannels = [], onSubmit, onBack }: Chan
           })}
         </div>
 
-        {/* Other Channels */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <Label className="text-base font-medium">Outros Canais</Label>
@@ -168,32 +167,16 @@ export function ChannelSelector({ initialChannels = [], onSubmit, onBack }: Chan
           {otherChannels.map((channel, index) => (
             <div key={index} className="flex gap-3 items-start motion-safe:animate-fade-in">
               <div className="flex-1 grid gap-3 sm:grid-cols-2">
-                <Input
-                  placeholder="Nome do canal (ex: Threads)"
-                  value={channel.label}
-                  onChange={(e) => updateOtherChannel(index, "label", e.target.value)}
-                />
-                <Input
-                  placeholder="https://…"
-                  value={channel.url}
-                  onChange={(e) => updateOtherChannel(index, "url", e.target.value)}
-                />
+                <Input placeholder="Nome do canal (ex: Threads)" value={channel.label} onChange={(e) => updateOtherChannel(index, "label", e.target.value)} />
+                <Input placeholder="https://…" value={channel.url} onChange={(e) => updateOtherChannel(index, "url", e.target.value)} />
               </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => removeOtherChannel(index)}
-                className="text-muted-foreground hover:text-destructive"
-                aria-label="Remover canal"
-              >
+              <Button type="button" variant="ghost" size="icon" onClick={() => removeOtherChannel(index)} className="text-muted-foreground hover:text-destructive" aria-label="Remover canal">
                 <X className="w-4 h-4" />
               </Button>
             </div>
           ))}
         </div>
 
-        {/* Navigation — #2: etapa é opcional; botão sempre habilitado */}
         <div className="flex justify-between pt-4">
           <Button type="button" variant="outline" onClick={onBack}>
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -201,24 +184,18 @@ export function ChannelSelector({ initialChannels = [], onSubmit, onBack }: Chan
           </Button>
 
           <div className="flex gap-3">
-            {/* Skip explícito caso não queira informar canais */}
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => onSubmit([])}
-              className="text-muted-foreground"
-            >
+            <Button type="button" variant="ghost" onClick={() => onSubmit([])} className="text-muted-foreground">
               <ArrowRightCircle className="w-4 h-4 mr-2" />
               Pular
             </Button>
 
-            <Button onClick={handleSubmit}>
-              Continuar → Checkup
+            <Button variant="cta" onClick={handleSubmit}>
+              CONTINUAR → CHECKUP
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
