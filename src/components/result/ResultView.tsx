@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,15 +7,12 @@ import {
   Download,
   FileText,
   CheckCircle2,
-  Home,
-  Lightbulb,
 } from "lucide-react";
 import { type Pillar } from "@/lib/questionBank";
 import { generateDetailedActions } from "@/lib/recommendationEngine";
 import type { Submission } from "@/types/checkup";
 import { PILLAR_ICONS } from "@/data/pillarConfig";
 import { CRPGauge } from "./CRPGauge";
-import { ImpactSection } from "./ImpactSection";
 import { PillarBreakdown } from "./PillarBreakdown";
 import { TopGaps } from "./TopGaps";
 import { AIAnalysis } from "./AIAnalysis";
@@ -38,7 +34,6 @@ export function ResultView({
   onDownloadPDF,
   onDownloadMarkdown,
 }: ResultViewProps) {
-  const navigate = useNavigate();
   const { crp, pillars, topGaps, identity } = submission;
 
   const detailedResult = generateDetailedActions(crp.band, pillars, topGaps);
@@ -50,7 +45,7 @@ export function ResultView({
   return (
     <div className="space-y-10 motion-safe:animate-fade-in">
 
-      {/* ── Anchor navigation — #43 ── */}
+      {/* ── Anchor navigation ── */}
       <nav
         aria-label="Navegação rápida"
         className="flex flex-wrap gap-2 sticky top-[57px] z-20 py-2 -mx-4 px-4 bg-background/90 backdrop-blur-md border-b"
@@ -58,7 +53,6 @@ export function ResultView({
       >
         {[
           { href: "#gauge",    label: "Score" },
-          { href: "#impact",   label: "Impacto" },
           { href: "#pillars",  label: "Pilares" },
           { href: "#gaps",     label: "Gargalos" },
           { href: "#analysis", label: "Análise IA" },
@@ -89,15 +83,12 @@ export function ResultView({
         </p>
       </div>
 
-      {/* ── CRP Gauge — #27: sem parágrafo duplicado ── */}
+      {/* ── CRP Gauge ── */}
       <Card className="border-2 border-foreground/10" id="gauge">
         <CardContent className="p-8 md:p-12">
           <CRPGauge score={crp.score} band={crp.band} animate />
         </CardContent>
       </Card>
-
-      {/* ── Impact — #30: ícone dinâmico via prop band ── */}
-      <ImpactSection explanation={detailedResult.impactExplanation} band={crp.band} />
 
       {/* ── Pillar Breakdown ── */}
       <div id="pillars">
@@ -109,7 +100,7 @@ export function ResultView({
         <TopGaps topGaps={topGaps} />
       </div>
 
-      {/* ── AI Analysis — #Sprint1: sempre renderizado; isLoading controla estado interno ── */}
+      {/* ── AI Analysis — sempre renderizado; isLoading controla estado interno ── */}
       <div id="analysis">
         {(isAiLoading || aiContent) && (
           <AIAnalysis
@@ -125,7 +116,6 @@ export function ResultView({
         <Card className="card-elevated border-accent/30 bg-accent/5">
           <CardHeader>
             <CardTitle className="font-display text-2xl flex items-center gap-2">
-              <Lightbulb className="w-6 h-6 text-accent" />
               AÇÕES PARA REDUZIR O RISCO PERCEBIDO
             </CardTitle>
             <CardDescription className="text-base">
@@ -187,7 +177,7 @@ export function ResultView({
         </CardContent>
       </Card>
 
-      {/* ── Footer CTA — #32: copy orientada a benefício ── */}
+      {/* ── Footer CTA ── */}
       <Card className="border-2 border-accent bg-accent/5" id="cta">
         <CardContent className="p-8 text-center space-y-6">
           <div className="space-y-2">
@@ -200,7 +190,6 @@ export function ResultView({
             </p>
           </div>
 
-          {/* #26 — Export buttons movidos para o final */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             {onSchedule && (
               <Button size="lg" variant="cta" onClick={onSchedule}>
@@ -208,13 +197,9 @@ export function ResultView({
                 FALAR COM UM ESPECIALISTA
               </Button>
             )}
-            <Button size="lg" variant="outline" onClick={() => navigate("/")}>
-              <Home className="w-5 h-5 mr-2" />
-              Novo Diagnóstico
-            </Button>
           </div>
 
-          {/* Export actions — discretas, no rodapé do CTA */}
+          {/* Export actions */}
           {(onDownloadPDF || onDownloadMarkdown) && (
             <div className="flex flex-wrap gap-2 justify-center pt-2">
               {onDownloadPDF && (
