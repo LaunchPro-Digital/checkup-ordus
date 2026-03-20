@@ -17,70 +17,64 @@ export function WizardStepper({ steps, currentStep, onStepClick }: WizardStepper
   return (
     <div className="w-full">
       {/* Desktop stepper */}
-      <div className="hidden md:flex items-center justify-between relative">
-        {/* Progress line */}
-        <div className="absolute top-5 left-0 right-0 h-0.5 bg-border">
-          <div
-            className="h-full bg-accent transition-all duration-500 ease-out"
-            style={{
-              width: `${(currentStep / (steps.length - 1)) * 100}%`,
-            }}
-          />
-        </div>
-
+      <div className="hidden md:flex items-center justify-center relative">
         {steps.map((step, index) => {
           const isCompleted = index < currentStep;
-          const isCurrent = index === currentStep;
-          const isClickable = index <= currentStep && onStepClick;
+          const isCurrent  = index === currentStep;
+          const isClickable = index < currentStep && onStepClick;
 
           return (
-            <button
-              key={step.id}
-              onClick={() => isClickable && onStepClick?.(index)}
-              disabled={!isClickable}
-              className={cn(
-                "relative flex flex-col items-center gap-2 z-10",
-                isClickable && "cursor-pointer",
-                !isClickable && "cursor-default"
-              )}
-            >
-              <div
+            <div key={step.id} className="flex items-center">
+              <button
+                onClick={() => isClickable && onStepClick?.(index)}
+                disabled={!isClickable}
                 className={cn(
-                  "w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300",
-                  isCompleted && "bg-accent border-accent",
-                  isCurrent && "bg-card border-accent ring-4 ring-accent/20",
-                  !isCompleted && !isCurrent && "bg-card border-border"
+                  "relative flex flex-col items-center gap-2 z-10",
+                  isClickable ? "cursor-pointer" : "cursor-default"
                 )}
               >
-                {isCompleted ? (
-                  <Check className="w-5 h-5 text-accent-foreground" />
-                ) : (
-                  <span
-                    className={cn(
-                      "font-display font-semibold text-sm",
-                      isCurrent ? "text-accent" : "text-muted-foreground"
-                    )}
-                  >
-                    {index + 1}
-                  </span>
-                )}
-              </div>
-              <div className="text-center">
-                <p
+                <div
                   className={cn(
-                    "text-sm font-medium transition-colors",
-                    isCurrent ? "text-foreground" : "text-muted-foreground"
+                    "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 text-xs font-bold",
+                    isCompleted && "bg-cta border-2 border-cta text-white",
+                    isCurrent  && "bg-accent border-2 border-accent text-white ring-4 ring-accent/20",
+                    !isCompleted && !isCurrent && "border-2 text-muted-foreground"
                   )}
+                  style={
+                    !isCompleted && !isCurrent
+                      ? { background: '#1F1F1F', borderColor: 'rgba(255,255,255,0.15)' }
+                      : undefined
+                  }
                 >
-                  {step.label}
-                </p>
-                {step.description && (
-                  <p className="text-xs text-muted-foreground hidden lg:block">
-                    {step.description}
+                  {isCompleted ? <Check className="w-4 h-4" /> : <span>{index + 1}</span>}
+                </div>
+
+                <div className="text-center min-w-[64px]">
+                  <p className={cn(
+                    "text-xs font-label tracking-wide transition-colors",
+                    isCurrent ? "text-foreground" : "text-muted-foreground"
+                  )}>
+                    {step.label}
                   </p>
-                )}
-              </div>
-            </button>
+                  {step.description && (
+                    <p className="text-[10px] text-muted-foreground hidden lg:block mt-0.5">
+                      {step.description}
+                    </p>
+                  )}
+                </div>
+              </button>
+
+              {index < steps.length - 1 && (
+                <div
+                  className="mx-3 h-px w-16 transition-colors duration-500"
+                  style={{
+                    background: index < currentStep
+                      ? 'hsl(var(--cta))'
+                      : 'rgba(255,255,255,0.10)',
+                  }}
+                />
+              )}
+            </div>
           );
         })}
       </div>
@@ -89,17 +83,21 @@ export function WizardStepper({ steps, currentStep, onStepClick }: WizardStepper
       <div className="md:hidden">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-medium text-foreground">
-            {steps[currentStep].label}
+            {steps[currentStep]?.label}
           </span>
-          <span className="text-sm text-muted-foreground">
-            {currentStep + 1} de {steps.length}
+          <span className="font-label text-[10px]" style={{ color: '#6A6A6A' }}>
+            {currentStep + 1} / {steps.length}
           </span>
         </div>
-        <div className="w-full h-2 bg-border rounded-full overflow-hidden">
+        <div
+          className="w-full h-1.5 rounded-full overflow-hidden"
+          style={{ background: 'rgba(255,255,255,0.08)' }}
+        >
           <div
-            className="h-full bg-accent transition-all duration-500 ease-out rounded-full"
+            className="h-full rounded-full transition-all duration-500 ease-out"
             style={{
               width: `${((currentStep + 1) / steps.length) * 100}%`,
+              background: 'hsl(var(--cta))',
             }}
           />
         </div>
