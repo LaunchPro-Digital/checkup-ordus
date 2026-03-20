@@ -29,6 +29,8 @@ export default function Resultados() {
 
     setSubmission(stateSubmission);
     sendWebhookAndWaitForResponse(stateSubmission);
+    // Fire-and-forget: register lead in GHL pipeline (non-blocking)
+    registerLeadInGHL(stateSubmission);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -93,6 +95,28 @@ export default function Resultados() {
       });
     } finally {
       setIsAiLoading(false);
+    }
+  };
+
+  // Fire-and-forget GHL pipeline registration — does not block or affect UI
+  const registerLeadInGHL = async (sub: Submission) => {
+    try {
+      await fetch(APP_CONFIG.ghlWebhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          event: "checkup.lead.captured",
+          submission_id: sub.id,
+          created_at: sub.createdAt.toISOString(),
+          identity: sub.identity,
+          crp: sub.crp,
+          top_gaps: sub.topGaps,
+          pillars: sub.pillars,
+        }),
+      });
+    } catch (err) {
+      // Silent fail — GHL registration is secondary, never breaks main flow
+      console.warn("GHL registration skipped:", err);
     }
   };
 
