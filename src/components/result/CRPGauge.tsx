@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import type { RiskBand } from "@/lib/questionBank";
 
@@ -12,6 +12,7 @@ interface CRPGaugeProps {
 export function CRPGauge({ score, band, animate = false, className }: CRPGaugeProps) {
   const [displayScore, setDisplayScore] = useState(animate ? 0 : score);
   const [rotation, setRotation] = useState(animate ? -90 : (score / 10) * 180 - 90);
+  const animationRef = useRef<number>();
 
   useEffect(() => {
     if (!animate) {
@@ -30,42 +31,47 @@ export function CRPGauge({ score, band, animate = false, className }: CRPGaugePr
     const animateGauge = () => {
       const elapsed = Date.now() - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      
+
       // Ease out cubic for smooth deceleration
       const eased = 1 - Math.pow(1 - progress, 3);
-      
+
       const currentRotation = startRotation + (targetRotation - startRotation) * eased;
       const currentScore = startScore + (score - startScore) * eased;
-      
+
       setRotation(currentRotation);
       setDisplayScore(currentScore);
 
       if (progress < 1) {
-        requestAnimationFrame(animateGauge);
+        animationRef.current = requestAnimationFrame(animateGauge);
       }
     };
 
     // Start animation after a brief delay
     const timeout = setTimeout(() => {
-      requestAnimationFrame(animateGauge);
+      animationRef.current = requestAnimationFrame(animateGauge);
     }, 300);
 
-    return () => clearTimeout(timeout);
+    return () => {
+      clearTimeout(timeout);
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
   }, [score, animate]);
   
-  // Colors for each section of the gauge - Petrol Blue to Red gradient
+  // Colors — DS Ordus v3.0: verde #00A47B (risco baixo) → âmbar → vermelho (risco alto)
   const sections = [
-    { color: "hsl(200, 80%, 28%)", label: "0" }, // Petrol Blue - Low risk
-    { color: "hsl(195, 75%, 32%)", label: "1" },
-    { color: "hsl(190, 70%, 38%)", label: "2" },
-    { color: "hsl(48, 90%, 50%)", label: "3" },  // Yellow - Medium risk
-    { color: "hsl(42, 90%, 50%)", label: "4" },
-    { color: "hsl(36, 90%, 50%)", label: "5" },
-    { color: "hsl(25, 90%, 50%)", label: "6" },  // Orange
-    { color: "hsl(15, 90%, 50%)", label: "7" },
-    { color: "hsl(5, 75%, 50%)", label: "8" },   // Red - High risk
-    { color: "hsl(0, 72%, 51%)", label: "9" },
-    { color: "hsl(0, 72%, 45%)", label: "10" },
+    { color: "hsl(163, 100%, 32%)", label: "0" }, // #00A47B DS green — RISCO BAIXO
+    { color: "hsl(160, 95%, 36%)", label: "1" },
+    { color: "hsl(155, 88%, 40%)", label: "2" },
+    { color: "hsl(48,  92%, 50%)", label: "3" },  // âmbar — RISCO MÉDIO
+    { color: "hsl(42,  90%, 50%)", label: "4" },
+    { color: "hsl(36,  90%, 50%)", label: "5" },
+    { color: "hsl(25,  88%, 50%)", label: "6" },  // laranja — RISCO ALTO
+    { color: "hsl(15,  88%, 50%)", label: "7" },
+    { color: "hsl( 5,  75%, 50%)", label: "8" },  // vermelho
+    { color: "hsl( 0,  72%, 51%)", label: "9" },
+    { color: "hsl( 0,  72%, 45%)", label: "10" },
   ];
 
   const bandLabels: Record<RiskBand, { text: string; color: string }> = {
