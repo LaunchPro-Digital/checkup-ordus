@@ -34,7 +34,6 @@ export function CheckupForm({ initialAnswers = [], onSubmit, onBack, onAnswerCha
   const isPillarComplete = pillarAnswered === pillarQuestions.length;
   const isAllComplete = totalAnswered === QUESTIONS.length;
 
-  // #21 — Texto motivacional perto do fim
   const progressLabel = useMemo(() => {
     const remaining = QUESTIONS.length - totalAnswered;
     if (remaining === 0) return `${QUESTIONS.length} de ${QUESTIONS.length} — Diagnóstico completo!`;
@@ -43,7 +42,6 @@ export function CheckupForm({ initialAnswers = [], onSubmit, onBack, onAnswerCha
     return `${totalAnswered} de ${QUESTIONS.length} perguntas respondidas`;
   }, [totalAnswered]);
 
-  // #16 — Auto-scroll para próxima pergunta sem resposta
   const scrollToNextUnanswered = useCallback(
     (justAnsweredId: string, currentAnswers: Map<string, 1 | 2 | 3 | 4 | 5>) => {
       const nextQuestion = pillarQuestions.find(
@@ -80,7 +78,6 @@ export function CheckupForm({ initialAnswers = [], onSubmit, onBack, onAnswerCha
   const goToPillar = (index: number) => {
     if (index >= 0 && index < PILLARS.length) {
       setCurrentPillar(index);
-      // Scroll to top of form when switching pillars
       setTimeout(() => {
         const el = document.getElementById("checkup-form-top");
         if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -88,19 +85,15 @@ export function CheckupForm({ initialAnswers = [], onSubmit, onBack, onAnswerCha
     }
   };
 
-  // Remaining questions in current pillar (for disabled button hint)
   const pillarRemaining = pillarQuestions.length - pillarAnswered;
 
   return (
     <div className="space-y-6 motion-safe:animate-fade-in" id="checkup-form-top">
-      {/* Progress bar */}
       <div className="space-y-2">
         <div className="flex justify-between text-sm">
           <span className={cn(
             "transition-colors",
-            totalAnswered >= QUESTIONS.length - 3
-              ? "text-risk-low font-medium"
-              : "text-muted-foreground"
+            totalAnswered >= QUESTIONS.length - 3 ? "text-risk-low font-medium" : "text-muted-foreground"
           )}>
             {progressLabel}
           </span>
@@ -109,7 +102,6 @@ export function CheckupForm({ initialAnswers = [], onSubmit, onBack, onAnswerCha
         <Progress value={progress} className="h-2" />
       </div>
 
-      {/* Pillar navigation — #18: gradient fade hint on overflow */}
       <div className="relative">
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
           {PILLARS.map((pillar, index) => {
@@ -139,21 +131,17 @@ export function CheckupForm({ initialAnswers = [], onSubmit, onBack, onAnswerCha
                 <span className={cn("font-medium text-sm", isCurrent ? "text-foreground" : "text-muted-foreground")}>
                   {PILLAR_NAMES[pillar]}
                 </span>
-                <span className="text-xs text-muted-foreground">
-                  {answered}/{questions.length}
-                </span>
+                <span className="text-xs text-muted-foreground">{answered}/{questions.length}</span>
               </button>
             );
           })}
         </div>
-        {/* Right-fade scroll hint */}
         <div
           className="absolute right-0 top-0 bottom-2 w-8 pointer-events-none"
           style={{ background: "linear-gradient(to right, transparent, hsl(var(--background)))" }}
         />
       </div>
 
-      {/* Current pillar card */}
       <Card className={cn("card-elevated border-2", PILLAR_COLORS[currentPillarKey])}>
         <CardHeader>
           <div className="flex items-center gap-3">
@@ -177,7 +165,6 @@ export function CheckupForm({ initialAnswers = [], onSubmit, onBack, onAnswerCha
                 )}
               >
                 <div className="flex gap-3">
-                  {/* #19 — Status indicator: círculo cinza → checkmark verde */}
                   {isAnswered ? (
                     <CheckCircle2 className="flex-shrink-0 w-6 h-6 mt-0.5 text-risk-low" />
                   ) : (
@@ -185,7 +172,6 @@ export function CheckupForm({ initialAnswers = [], onSubmit, onBack, onAnswerCha
                   )}
                   <p className="text-foreground leading-relaxed pt-0.5">{question.text}</p>
                 </div>
-                {/* #38 — Passar questionText para aria-label acessível */}
                 <div className="pl-9">
                   <RatingScale
                     value={answers.get(question.id)}
@@ -199,7 +185,6 @@ export function CheckupForm({ initialAnswers = [], onSubmit, onBack, onAnswerCha
         </CardContent>
       </Card>
 
-      {/* Navigation */}
       <div className="flex items-center justify-between gap-4">
         <Button
           type="button"
@@ -212,14 +197,10 @@ export function CheckupForm({ initialAnswers = [], onSubmit, onBack, onAnswerCha
 
         {currentPillar < PILLARS.length - 1 ? (
           <div className="flex flex-col items-end gap-1">
-            <Button
-              onClick={() => goToPillar(currentPillar + 1)}
-              disabled={!isPillarComplete}
-            >
-              Próximo pilar
+            <Button variant="cta" onClick={() => goToPillar(currentPillar + 1)} disabled={!isPillarComplete}>
+              PRÓXIMO PILAR
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
-            {/* #20 — Hint quando desabilitado */}
             {!isPillarComplete && (
               <p className="text-xs text-muted-foreground">
                 Responda mais {pillarRemaining} pergunta{pillarRemaining > 1 ? "s" : ""} para continuar
@@ -229,14 +210,14 @@ export function CheckupForm({ initialAnswers = [], onSubmit, onBack, onAnswerCha
         ) : (
           <div className="flex flex-col items-end gap-1">
             <Button
+              variant={isAllComplete ? "cta" : "outline"}
               onClick={handleSubmit}
               disabled={!isAllComplete}
-              className={cn(isAllComplete && "bg-accent hover:bg-accent/90")}
             >
               {isAllComplete ? (
                 <>
                   <CheckCircle2 className="w-4 h-4 mr-2" />
-                  Ver Resultado
+                  VER RESULTADO →
                 </>
               ) : (
                 <>
