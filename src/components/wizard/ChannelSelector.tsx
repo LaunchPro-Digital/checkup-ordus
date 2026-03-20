@@ -152,6 +152,7 @@ export function ChannelSelector({ initialChannels = [], onSubmit, onBack }: Chan
                     placeholder={option.placeholder}
                     value={channelUrls[option.type] || ""}
                     onChange={(e) => updateChannelUrl(option.type, e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
                     className="mt-2"
                   />
                 )}
