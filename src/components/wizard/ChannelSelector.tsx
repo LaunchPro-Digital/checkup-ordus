@@ -127,18 +127,23 @@ export function ChannelSelector({ initialChannels = [], onSubmit, onBack }: Chan
               <div
                 key={option.type}
                 className={cn(
-                  "rounded-lg border p-4 transition-all",
-                  isSelected ? "border-accent bg-accent/5" : "border-border"
+                  "rounded-xl border p-4 transition-all cursor-pointer",
+                  isSelected
+                    ? "border-cta/50 bg-cta/5"
+                    : "border-border hover:border-white/15"
                 )}
+                onClick={() => toggleChannel(option.type)}
               >
                 <div className="flex items-center gap-3 mb-3">
                   <Checkbox
                     id={option.type}
                     checked={isSelected}
                     onCheckedChange={() => toggleChannel(option.type)}
+                    onClick={e => e.stopPropagation()}
+                    className={isSelected ? "border-cta data-[state=checked]:bg-cta data-[state=checked]:border-cta" : ""}
                   />
-                  <Label htmlFor={option.type} className="flex items-center gap-2 cursor-pointer font-medium">
-                    <Icon className="w-4 h-4" />
+                  <Label htmlFor={option.type} className="flex items-center gap-2 cursor-pointer font-label text-[11px] tracking-wide" style={{ color: isSelected ? '#00D4A0' : '#ABABAB' }}>
+                    <Icon className="w-3.5 h-3.5" />
                     {option.label}
                   </Label>
                 </div>
@@ -157,7 +162,7 @@ export function ChannelSelector({ initialChannels = [], onSubmit, onBack }: Chan
 
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <Label className="text-base font-medium">Outros Canais</Label>
+            <Label className="font-label text-[11px] tracking-wide" style={{ color: '#6A6A6A' }}>Outros Canais</Label>
             <Button type="button" variant="outline" size="sm" onClick={addOtherChannel}>
               <Plus className="w-4 h-4 mr-2" />
               Adicionar
