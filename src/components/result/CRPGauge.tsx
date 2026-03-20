@@ -199,6 +199,10 @@ export function CRPGauge({ score, band, animate = false, className }: CRPGaugePr
         <div className={cn("font-display text-xl font-semibold tracking-wide", bandLabels[band].color)}>
           {bandLabels[band].text}
         </div>
+        <p className="text-sm text-muted-foreground max-w-xs mx-auto pt-1">
+          Meta: o mais próximo de <span className="font-semibold text-risk-low">0</span>.
+          Quanto mais próximo de <span className="font-semibold text-risk-high">10</span>, maior o risco que seu cliente percebe ao considerar fazer negócios com sua empresa.
+        </p>
       </div>
     </div>
   );
