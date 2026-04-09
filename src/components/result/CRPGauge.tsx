@@ -21,9 +21,8 @@ export function CRPGauge({ score, band, animate = false, className }: CRPGaugePr
       return;
     }
 
-    // Animate from 0 to score
     const targetRotation = (score / 10) * 180 - 90;
-    const duration = 1500; // 1.5 seconds
+    const duration = 1500;
     const startTime = Date.now();
     const startRotation = -90;
     const startScore = 0;
@@ -31,53 +30,46 @@ export function CRPGauge({ score, band, animate = false, className }: CRPGaugePr
     const animateGauge = () => {
       const elapsed = Date.now() - startTime;
       const progress = Math.min(elapsed / duration, 1);
-
-      // Ease out cubic for smooth deceleration
       const eased = 1 - Math.pow(1 - progress, 3);
 
-      const currentRotation = startRotation + (targetRotation - startRotation) * eased;
-      const currentScore = startScore + (score - startScore) * eased;
-
-      setRotation(currentRotation);
-      setDisplayScore(currentScore);
+      setRotation(startRotation + (targetRotation - startRotation) * eased);
+      setDisplayScore(startScore + (score - startScore) * eased);
 
       if (progress < 1) {
         animationRef.current = requestAnimationFrame(animateGauge);
       }
     };
 
-    // Start animation after a brief delay
     const timeout = setTimeout(() => {
       animationRef.current = requestAnimationFrame(animateGauge);
     }, 300);
 
     return () => {
       clearTimeout(timeout);
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
   }, [score, animate]);
-  
-  // Colors — DS Ordus v3.0: verde #00A47B (risco baixo) → âmbar → vermelho (risco alto)
+
+  // Colors — DS Ordus v3.0: verde → âmbar → vermelho
   const sections = [
-    { color: "hsl(163, 100%, 32%)", label: "0" }, // #00A47B DS green — RISCO BAIXO
-    { color: "hsl(160, 95%, 36%)", label: "1" },
-    { color: "hsl(155, 88%, 40%)", label: "2" },
-    { color: "hsl(48,  92%, 50%)", label: "3" },  // âmbar — RISCO MÉDIO
-    { color: "hsl(42,  90%, 50%)", label: "4" },
-    { color: "hsl(36,  90%, 50%)", label: "5" },
-    { color: "hsl(25,  88%, 50%)", label: "6" },  // laranja — RISCO ALTO
-    { color: "hsl(15,  88%, 50%)", label: "7" },
-    { color: "hsl( 5,  75%, 50%)", label: "8" },  // vermelho
-    { color: "hsl( 0,  72%, 51%)", label: "9" },
-    { color: "hsl( 0,  72%, 45%)", label: "10" },
+    { color: "hsl(163, 100%, 32%)" },
+    { color: "hsl(160, 95%, 36%)" },
+    { color: "hsl(155, 88%, 40%)" },
+    { color: "hsl(48,  92%, 50%)" },
+    { color: "hsl(42,  90%, 50%)" },
+    { color: "hsl(36,  90%, 50%)" },
+    { color: "hsl(25,  88%, 50%)" },
+    { color: "hsl(15,  88%, 50%)" },
+    { color: "hsl( 5,  75%, 50%)" },
+    { color: "hsl( 0,  72%, 51%)" },
+    { color: "hsl( 0,  72%, 45%)" },
   ];
 
+  // DS Ordus: band label uses font-label (Lowvetica Bold UPPERCASE)
   const bandLabels: Record<RiskBand, { text: string; color: string }> = {
-    low: { text: "RISCO BAIXO", color: "text-risk-low" },
-    medium: { text: "RISCO MÉDIO", color: "text-risk-medium" },
-    high: { text: "RISCO ALTO", color: "text-risk-high" },
+    low:    { text: "RISCO BAIXO",  color: "text-risk-low" },
+    medium: { text: "RISCO MÉDIO",  color: "text-risk-medium" },
+    high:   { text: "RISCO ALTO",   color: "text-risk-high" },
   };
 
   return (
@@ -85,124 +77,70 @@ export function CRPGauge({ score, band, animate = false, className }: CRPGaugePr
       {/* Gauge SVG */}
       <div className="relative w-64 h-40 md:w-80 md:h-48">
         <svg viewBox="0 0 200 120" className="w-full h-full">
-          {/* Gauge arc sections */}
           {sections.map((section, index) => {
             const startAngle = -90 + (index * 180) / 11;
             const endAngle = -90 + ((index + 1) * 180) / 11;
             const startRad = (startAngle * Math.PI) / 180;
             const endRad = (endAngle * Math.PI) / 180;
-            
             const innerRadius = 60;
             const outerRadius = 85;
-            const centerX = 100;
-            const centerY = 100;
-            
-            const x1 = centerX + innerRadius * Math.cos(startRad);
-            const y1 = centerY + innerRadius * Math.sin(startRad);
-            const x2 = centerX + outerRadius * Math.cos(startRad);
-            const y2 = centerY + outerRadius * Math.sin(startRad);
-            const x3 = centerX + outerRadius * Math.cos(endRad);
-            const y3 = centerY + outerRadius * Math.sin(endRad);
-            const x4 = centerX + innerRadius * Math.cos(endRad);
-            const y4 = centerY + innerRadius * Math.sin(endRad);
-            
+            const cx = 100, cy = 100;
+            const x1 = cx + innerRadius * Math.cos(startRad);
+            const y1 = cy + innerRadius * Math.sin(startRad);
+            const x2 = cx + outerRadius * Math.cos(startRad);
+            const y2 = cy + outerRadius * Math.sin(startRad);
+            const x3 = cx + outerRadius * Math.cos(endRad);
+            const y3 = cy + outerRadius * Math.sin(endRad);
+            const x4 = cx + innerRadius * Math.cos(endRad);
+            const y4 = cy + innerRadius * Math.sin(endRad);
             const largeArc = endAngle - startAngle > 180 ? 1 : 0;
-            
-            const path = `
-              M ${x1} ${y1}
-              L ${x2} ${y2}
-              A ${outerRadius} ${outerRadius} 0 ${largeArc} 1 ${x3} ${y3}
-              L ${x4} ${y4}
-              A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${x1} ${y1}
-              Z
-            `;
-            
-            return (
-              <path
-                key={index}
-                d={path}
-                fill={section.color}
-                stroke="white"
-                strokeWidth="1"
-              />
-            );
+            const d = `M ${x1} ${y1} L ${x2} ${y2} A ${outerRadius} ${outerRadius} 0 ${largeArc} 1 ${x3} ${y3} L ${x4} ${y4} A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${x1} ${y1} Z`;
+            return <path key={index} d={d} fill={section.color} stroke="white" strokeWidth="1" />;
           })}
-          
-          {/* Tick marks and labels */}
-          {sections.map((section, index) => {
-            const angle = -90 + (index * 180) / 10;
+
+          {/* Tick labels 0–10 */}
+          {Array.from({ length: 11 }, (_, i) => {
+            const angle = -90 + (i * 180) / 10;
             const rad = (angle * Math.PI) / 180;
-            const labelRadius = 95;
-            const x = 100 + labelRadius * Math.cos(rad);
-            const y = 100 + labelRadius * Math.sin(rad);
-            
+            const r = 95;
             return (
               <text
-                key={`label-${index}`}
-                x={x}
-                y={y}
+                key={i}
+                x={100 + r * Math.cos(rad)}
+                y={100 + r * Math.sin(rad)}
                 textAnchor="middle"
                 dominantBaseline="middle"
                 className="fill-muted-foreground text-[8px] font-medium"
               >
-                {index}
+                {i}
               </text>
             );
           })}
-          
-          {/* Last label (10) */}
-          <text
-            x={100 + 95 * Math.cos((90 * Math.PI) / 180)}
-            y={100 + 95 * Math.sin((90 * Math.PI) / 180)}
-            textAnchor="middle"
-            dominantBaseline="middle"
-            className="fill-muted-foreground text-[8px] font-medium"
-          >
-            10
-          </text>
-          
+
           {/* Needle */}
-          <g 
+          <g
             transform={`rotate(${rotation}, 100, 100)`}
             style={{ transition: animate ? "none" : "transform 0.3s ease-out" }}
           >
-            {/* Needle body */}
-            <polygon
-              points="100,30 96,100 104,100"
-              fill="hsl(var(--foreground))"
-            />
-            {/* Needle center circle */}
-            <circle
-              cx="100"
-              cy="100"
-              r="8"
-              fill="hsl(var(--foreground))"
-            />
-            <circle
-              cx="100"
-              cy="100"
-              r="4"
-              fill="hsl(var(--background))"
-            />
+            <polygon points="100,30 96,100 104,100" fill="hsl(var(--foreground))" />
+            <circle cx="100" cy="100" r="8" fill="hsl(var(--foreground))" />
+            <circle cx="100" cy="100" r="4" fill="hsl(var(--background))" />
           </g>
         </svg>
       </div>
-      
-      {/* Score display */}
+
+      {/* Score display — DS: Fractul Black (font-black) for number, font-label for band */}
       <div className="text-center space-y-2">
         <div className="flex items-baseline justify-center gap-2">
-          <span className="font-display text-6xl md:text-7xl font-bold text-foreground">
+          <span className="text-6xl md:text-7xl font-black text-foreground">
             {displayScore.toFixed(1)}
           </span>
           <span className="text-xl text-muted-foreground">/10</span>
         </div>
-        <div className={cn("font-display text-xl font-semibold tracking-wide", bandLabels[band].color)}>
+        {/* Band label — Lowvetica Bold UPPERCASE per DS spec */}
+        <div className={cn("font-label text-sm tracking-widest", bandLabels[band].color)}>
           {bandLabels[band].text}
         </div>
-        <p className="text-sm text-muted-foreground max-w-xs mx-auto pt-1">
-          Meta: o mais próximo de <span className="font-semibold text-risk-low">0</span>.
-          Quanto mais próximo de <span className="font-semibold text-risk-high">10</span>, maior o risco que seu cliente percebe ao considerar fazer negócios com sua empresa.
-        </p>
       </div>
     </div>
   );

@@ -76,6 +76,10 @@ export interface Submission {
   webhookUrlSnapshot?: string;
   webhookDeliveryStatus?: "pending" | "sent" | "failed";
   webhookLastError?: string;
+  // GHL integration tracking (populated after /api/register completes)
+  ghlContactId?: string;
+  ghlOpportunityId?: string;
+  ghlRegisteredAt?: Date;
 }
 
 export interface WizardDraft {

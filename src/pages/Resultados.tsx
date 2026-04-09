@@ -28,11 +28,58 @@ export default function Resultados() {
     }
 
     setSubmission(stateSubmission);
+    // Fire both calls in parallel — GHL registration is fire-and-forget (lead never lost if AI fails)
     sendWebhookAndWaitForResponse(stateSubmission);
-    // Fire-and-forget: register lead in GHL pipeline (non-blocking)
     registerLeadInGHL(stateSubmission);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  /**
+   * Fire-and-forget: register lead in GHL via Vercel serverless function.
+   * Runs in parallel with AI analysis — if AI fails, lead is already captured.
+   */
+  const registerLeadInGHL = async (sub: Submission) => {
+    try {
+      const body = {
+        name: sub.identity.personName,
+        email: sub.identity.email,
+        phone: sub.identity.whatsapp || undefined,
+        empresa: sub.identity.companyName || undefined,
+        segmento: sub.identity.segment || undefined,
+        publico: sub.identity.targetAudience || undefined,
+        crpScore: sub.crp.score,
+        topGaps: sub.topGaps.map((g) => g.text),
+        canais: sub.channels.map((c) => c.label || c.type),
+      };
+
+      const res = await fetch(APP_CONFIG.registerUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        console.log('[GHL] Lead registered:', data.contactId, data.opportunityId);
+        // Enrich the submission object in-state with GHL ids
+        setSubmission((prev) =>
+          prev
+            ? {
+                ...prev,
+                ghlContactId: data.contactId,
+                ghlOpportunityId: data.opportunityId,
+                ghlRegisteredAt: new Date(),
+              }
+            : prev
+        );
+      } else {
+        console.warn('[GHL] Registration failed:', res.status, await res.text());
+      }
+    } catch (err) {
+      // Non-fatal — user still sees results
+      console.error('[GHL] Registration error:', err);
+    }
+  };
 
   const sendWebhookAndWaitForResponse = async (sub: Submission) => {
     try {
@@ -95,28 +142,6 @@ export default function Resultados() {
       });
     } finally {
       setIsAiLoading(false);
-    }
-  };
-
-  // Fire-and-forget GHL pipeline registration — does not block or affect UI
-  const registerLeadInGHL = async (sub: Submission) => {
-    try {
-      await fetch(APP_CONFIG.ghlWebhookUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          event: "checkup.lead.captured",
-          submission_id: sub.id,
-          created_at: sub.createdAt.toISOString(),
-          identity: sub.identity,
-          crp: sub.crp,
-          top_gaps: sub.topGaps,
-          pillars: sub.pillars,
-        }),
-      });
-    } catch (err) {
-      // Silent fail — GHL registration is secondary, never breaks main flow
-      console.warn("GHL registration skipped:", err);
     }
   };
 

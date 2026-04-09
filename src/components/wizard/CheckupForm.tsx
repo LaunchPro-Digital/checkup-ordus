@@ -1,6 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, ArrowRight, CheckCircle2, AlertCircle, Circle } from "lucide-react";
 import { RatingScale } from "./RatingScale";
@@ -34,6 +33,7 @@ export function CheckupForm({ initialAnswers = [], onSubmit, onBack, onAnswerCha
   const isPillarComplete = pillarAnswered === pillarQuestions.length;
   const isAllComplete = totalAnswered === QUESTIONS.length;
 
+  // Motivational label near the end
   const progressLabel = useMemo(() => {
     const remaining = QUESTIONS.length - totalAnswered;
     if (remaining === 0) return `${QUESTIONS.length} de ${QUESTIONS.length} — Diagnóstico completo!`;
@@ -42,6 +42,7 @@ export function CheckupForm({ initialAnswers = [], onSubmit, onBack, onAnswerCha
     return `${totalAnswered} de ${QUESTIONS.length} perguntas respondidas`;
   }, [totalAnswered]);
 
+  // Auto-scroll to next unanswered question
   const scrollToNextUnanswered = useCallback(
     (justAnsweredId: string, currentAnswers: Map<string, 1 | 2 | 3 | 4 | 5>) => {
       const nextQuestion = pillarQuestions.find(
@@ -89,12 +90,17 @@ export function CheckupForm({ initialAnswers = [], onSubmit, onBack, onAnswerCha
 
   return (
     <div className="space-y-6 motion-safe:animate-fade-in" id="checkup-form-top">
+      {/* Progress bar */}
       <div className="space-y-2">
         <div className="flex justify-between text-sm">
-          <span className={cn(
-            "transition-colors",
-            totalAnswered >= QUESTIONS.length - 3 ? "text-risk-low font-medium" : "text-muted-foreground"
-          )}>
+          <span
+            className={cn(
+              "transition-colors",
+              totalAnswered >= QUESTIONS.length - 3
+                ? "text-risk-low font-medium"
+                : "text-muted-foreground"
+            )}
+          >
             {progressLabel}
           </span>
           <span className="font-medium">{Math.round(progress)}%</span>
@@ -102,6 +108,7 @@ export function CheckupForm({ initialAnswers = [], onSubmit, onBack, onAnswerCha
         <Progress value={progress} className="h-2" />
       </div>
 
+      {/* ── Pillar navigation — DS: card-solid for inactive, pillar border for active ── */}
       <div className="relative">
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
           {PILLARS.map((pillar, index) => {
@@ -115,10 +122,10 @@ export function CheckupForm({ initialAnswers = [], onSubmit, onBack, onAnswerCha
                 key={pillar}
                 onClick={() => goToPillar(index)}
                 className={cn(
-                  "flex items-center gap-2 px-4 py-2 rounded-lg border transition-all whitespace-nowrap",
-                  isCurrent && PILLAR_COLORS[pillar],
-                  isCurrent && "border-2",
-                  !isCurrent && "border-border hover:bg-muted/50"
+                  "flex items-center gap-2 px-4 py-2 rounded-lg border transition-all whitespace-nowrap text-left",
+                  isCurrent
+                    ? cn("border-2", PILLAR_COLORS[pillar])
+                    : "card-solid border-border hover:border-white/15"
                 )}
               >
                 {complete ? (
@@ -128,31 +135,50 @@ export function CheckupForm({ initialAnswers = [], onSubmit, onBack, onAnswerCha
                 ) : (
                   <div className="w-4 h-4 rounded-full border-2 border-border flex-shrink-0" />
                 )}
-                <span className={cn("font-label text-[11px] tracking-wide", isCurrent ? "text-foreground" : "text-muted-foreground")}>
+                <span
+                  className={cn(
+                    "font-medium text-sm",
+                    isCurrent ? "text-foreground" : "text-muted-foreground"
+                  )}
+                >
                   {PILLAR_NAMES[pillar]}
                 </span>
-                <span className="font-handle text-[10px] text-muted-foreground">{answered}/{questions.length}</span>
+                <span className="text-xs text-muted-foreground">
+                  {answered}/{questions.length}
+                </span>
               </button>
             );
           })}
         </div>
+        {/* Right-fade scroll hint */}
         <div
           className="absolute right-0 top-0 bottom-2 w-8 pointer-events-none"
           style={{ background: "linear-gradient(to right, transparent, hsl(var(--background)))" }}
         />
       </div>
 
-      <Card className={cn("card-elevated border-2", PILLAR_COLORS[currentPillarKey])}>
-        <CardHeader>
+      {/* ── Current pillar card — DS: card-elevated div (not shadcn Card) ── */}
+      <div className={cn("card-elevated border-2", PILLAR_COLORS[currentPillarKey])}>
+        {/* Card header */}
+        <div className="p-6 pb-4">
           <div className="flex items-center gap-3">
-            <span className={cn("px-3 py-1 rounded-full text-sm font-semibold", PILLAR_BADGE_COLORS[currentPillarKey])}>
+            <span
+              className={cn(
+                "px-3 py-1 rounded-full text-sm font-semibold",
+                PILLAR_BADGE_COLORS[currentPillarKey]
+              )}
+            >
               {currentPillarKey}
             </span>
-            <CardTitle className="font-display text-xl">{PILLAR_NAMES[currentPillarKey]}</CardTitle>
+            <h2 className="text-xl">{PILLAR_NAMES[currentPillarKey]}</h2>
           </div>
-          <CardDescription>{PILLAR_DESCRIPTIONS[currentPillarKey]}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-8">
+          <p className="text-muted-foreground mt-1.5 text-sm">
+            {PILLAR_DESCRIPTIONS[currentPillarKey]}
+          </p>
+        </div>
+
+        {/* Questions */}
+        <div className="px-6 pb-6 space-y-8">
           {pillarQuestions.map((question, qIndex) => {
             const isAnswered = answers.has(question.id);
             return (
@@ -165,6 +191,7 @@ export function CheckupForm({ initialAnswers = [], onSubmit, onBack, onAnswerCha
                 )}
               >
                 <div className="flex gap-3">
+                  {/* Status indicator: circle → checkmark */}
                   {isAnswered ? (
                     <CheckCircle2 className="flex-shrink-0 w-6 h-6 mt-0.5 text-risk-low" />
                   ) : (
@@ -182,9 +209,10 @@ export function CheckupForm({ initialAnswers = [], onSubmit, onBack, onAnswerCha
               </div>
             );
           })}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
+      {/* Navigation */}
       <div className="flex items-center justify-between gap-4">
         <Button
           type="button"
@@ -197,7 +225,11 @@ export function CheckupForm({ initialAnswers = [], onSubmit, onBack, onAnswerCha
 
         {currentPillar < PILLARS.length - 1 ? (
           <div className="flex flex-col items-end gap-1">
-            <Button variant="cta" onClick={() => goToPillar(currentPillar + 1)} disabled={!isPillarComplete}>
+            <Button
+              variant="cta"
+              onClick={() => goToPillar(currentPillar + 1)}
+              disabled={!isPillarComplete}
+            >
               PRÓXIMO PILAR
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
